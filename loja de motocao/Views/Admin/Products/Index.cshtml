@@ -1,0 +1,96 @@
+@model List<EssenzStore.Models.Product>
+@{
+    ViewData["Title"] = "Produtos";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    int page = ViewBag.Page ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    string? q = ViewBag.Q;
+}
+
+@section TopbarActions {
+    <a href="/admin/produtos/novo" class="btn-adm btn-adm--gold btn-adm--sm">
+        <i class="fas fa-plus"></i> Novo Produto
+    </a>
+}
+
+<div class="adm-card">
+    <form method="get" style="display:flex;gap:0.75rem;margin-bottom:1.25rem">
+        <input type="text" name="q" value="@q" placeholder="Buscar produto..." style="max-width:280px;background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.5rem .9rem;font-size:.875rem" />
+        <button type="submit" class="btn-adm btn-adm--ghost btn-adm--sm"><i class="fas fa-search"></i> Buscar</button>
+        @if (!string.IsNullOrEmpty(q))
+        {
+            <a href="/admin/produtos" class="btn-adm btn-adm--ghost btn-adm--sm">Limpar</a>
+        }
+    </form>
+
+    <div class="adm-table-wrap">
+        <table class="adm-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Produto</th>
+                    <th>Marca / Categoria</th>
+                    <th>Preço</th>
+                    <th>Status</th>
+                    <th>Criado em</th>
+                    <th style="text-align:right">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model)
+                {
+                    <tr>
+                        <td style="color:#555">#@p.Id</td>
+                        <td>
+                            <strong>@p.Nome</strong>
+                            @if (p.Destaque) { <span class="badge badge--paid" style="margin-left:.4rem">Destaque</span> }
+                            @if (p.Lancamento) { <span class="badge badge--blue" style="margin-left:.4rem;background:rgba(59,130,246,.15);color:#3b82f6">Novo</span> }
+                        </td>
+                        <td>
+                            <span style="color:#aaa">@(p.Brand?.Nome ?? "—")</span><br>
+                            <small style="color:#555">@(p.Category?.Nome ?? "—")</small>
+                        </td>
+                        <td>
+                            <strong style="color:#fff">R$ @p.Preco.ToString("N2")</strong>
+                            @if (p.PrecoPromocional.HasValue)
+                            {
+                                <br><small style="color:#10b981">R$ @p.PrecoPromocional.Value.ToString("N2")</small>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge badge--@(p.Ativo ? "active" : "inactive")">@(p.Ativo ? "Ativo" : "Inativo")</span>
+                        </td>
+                        <td style="color:#666;font-size:.8rem">@p.CreatedAt.ToString("dd/MM/yyyy")</td>
+                        <td style="text-align:right">
+                            <div style="display:flex;gap:.5rem;justify-content:flex-end">
+                                <a href="/admin/produtos/@p.Id/editar" class="btn-adm btn-adm--ghost btn-adm--sm"><i class="fas fa-edit"></i></a>
+                                <form asp-action="ExcluirProduto" asp-controller="Admin" asp-route-id="@p.Id" method="post" onsubmit="return confirm('Desativar este produto?')">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-adm btn-adm--danger btn-adm--sm"><i class="fas fa-ban"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="7" style="text-align:center;color:#555;padding:2rem">Nenhum produto encontrado.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginação -->
+    @if (totalPages > 1)
+    {
+        <div class="adm-pagination">
+            @if (page > 1) { <a href="?page=@(page - 1)&q=@q"><i class="fas fa-chevron-left"></i></a> }
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                if (i == page) { <span class="active">@i</span> }
+                else { <a href="?page=@i&q=@q">@i</a> }
+            }
+            @if (page < totalPages) { <a href="?page=@(page + 1)&q=@q"><i class="fas fa-chevron-right"></i></a> }
+        </div>
+    }
+</div>

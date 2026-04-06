@@ -1,0 +1,60 @@
+@model EssenzStore.Models.ViewModels.OrderListViewModel
+@{
+    ViewData["Title"] = "Meus Pedidos";
+}
+
+<div class="page-header">
+    <div class="container">
+        <nav class="breadcrumb">
+            <a href="/">Home</a>
+            <i class="fas fa-chevron-right"></i>
+            <a href="/minha-conta">Minha Conta</a>
+            <i class="fas fa-chevron-right"></i>
+            <span>Pedidos</span>
+        </nav>
+        <h1 class="page-header__title">Meus Pedidos</h1>
+    </div>
+</div>
+
+<div class="container" style="padding-bottom:4rem">
+    @if (Model.Orders.Any())
+    {
+        <div style="margin-top:2rem;display:flex;flex-direction:column;gap:1rem">
+            @foreach (var order in Model.Orders)
+            {
+                <div class="admin-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
+                        <div>
+                            <strong style="font-size:1.1rem">#@order.NumeroPedido</strong>
+                            <span style="color:var(--text3);margin-left:1rem;font-size:0.82rem">@order.CreatedAt.ToString("dd/MM/yyyy")</span>
+                        </div>
+                        <span class="status-badge status-badge--@order.Status.ToString().ToLower()">@order.Status</span>
+                        <strong style="font-size:1.1rem">R$ @order.Total.ToString("N2")</strong>
+                        <a href="/minha-conta/pedidos/@order.Id" class="btn btn--ghost btn--sm">Ver detalhes</a>
+                    </div>
+                    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);display:flex;gap:1rem;flex-wrap:wrap">
+                        @foreach (var item in order.Items.Take(3))
+                        {
+                            <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;color:var(--text2)">
+                                <span>@item.NomeProdutoSnapshot @(item.TamanhoSnapshot != null ? "/ " + item.TamanhoSnapshot : "") x@item.Quantidade</span>
+                            </div>
+                        }
+                        @if (order.Items.Count > 3)
+                        {
+                            <span style="font-size:0.78rem;color:var(--text3)">+@(order.Items.Count - 3) item(s)</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state" style="margin-top:4rem">
+            <i class="fas fa-box-open empty-state__icon"></i>
+            <h3>Nenhum pedido encontrado</h3>
+            <p>Você ainda não realizou nenhum pedido.</p>
+            <a href="/Products/Index" class="btn btn--primary btn--lg">Começar a comprar</a>
+        </div>
+    }
+</div>

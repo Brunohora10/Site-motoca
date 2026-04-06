@@ -1,0 +1,380 @@
+@model EssenzStore.Models.ViewModels.CheckoutViewModel
+@{
+    ViewData["Title"] = "Finalizar Pedido";
+}
+
+<div class="page-header">
+    <div class="container">
+        <nav class="breadcrumb">
+            <a href="/">Home</a>
+            <i class="fas fa-chevron-right"></i>
+            <a href="/Cart/Index">Carrinho</a>
+            <i class="fas fa-chevron-right"></i>
+            <span>Checkout</span>
+        </nav>
+        <h1 class="page-header__title">Finalizar Pedido</h1>
+    </div>
+</div>
+
+<div class="container" style="padding-bottom:4rem">
+    <form asp-controller="Checkout" asp-action="Finalizar" method="post" id="checkoutForm">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="All" class="validation-summary"></div>
+
+        <div class="checkout-layout">
+            <!-- Formulário -->
+            <div class="checkout-form">
+
+                <!-- Dados pessoais -->
+                <div class="checkout-section">
+                    <h2 class="checkout-section__title"><span>1</span> Dados Pessoais</h2>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label asp-for="Nome" class="form-label">Nome</label>
+                            <input asp-for="Nome" class="form-input" />
+                            <span asp-validation-for="Nome" class="field-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Sobrenome" class="form-label">Sobrenome</label>
+                            <input asp-for="Sobrenome" class="form-input" />
+                            <span asp-validation-for="Sobrenome" class="field-error"></span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label asp-for="Email" class="form-label">E-mail</label>
+                            <input asp-for="Email" class="form-input" />
+                            <span asp-validation-for="Email" class="field-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Telefone" class="form-label">Telefone</label>
+                            <input asp-for="Telefone" class="form-input" placeholder="(48) 99999-9999" />
+                            <span asp-validation-for="Telefone" class="field-error"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Cpf" class="form-label">CPF</label>
+                        <input asp-for="Cpf" class="form-input" placeholder="000.000.000-00" style="max-width:250px" />
+                        <span asp-validation-for="Cpf" class="field-error"></span>
+                    </div>
+                </div>
+
+                <!-- Endereço -->
+                <div class="checkout-section">
+                    <h2 class="checkout-section__title"><span>2</span> Endereço de Entrega</h2>
+                    <div class="form-row">
+                        <div class="form-group" style="max-width:200px">
+                            <label asp-for="Cep" class="form-label">CEP</label>
+                            <div style="display:flex;gap:8px">
+                                <input asp-for="Cep" class="form-input" id="cepField" placeholder="00000-000" maxlength="9" />
+                                <button type="button" class="btn btn--sm" id="lookupCep">Buscar</button>
+                            </div>
+                            <span asp-validation-for="Cep" class="field-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Estado" class="form-label">Estado</label>
+                            <input asp-for="Estado" class="form-input" id="estadoField" placeholder="SC" maxlength="2" style="max-width:100px" />
+                            <span asp-validation-for="Estado" class="field-error"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Rua" class="form-label">Rua / Avenida</label>
+                        <input asp-for="Rua" class="form-input" id="ruaField" />
+                        <span asp-validation-for="Rua" class="field-error"></span>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group" style="max-width:150px">
+                            <label asp-for="Numero" class="form-label">Número</label>
+                            <input asp-for="Numero" class="form-input" />
+                            <span asp-validation-for="Numero" class="field-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Complemento" class="form-label">Complemento <small>(opcional)</small></label>
+                            <input asp-for="Complemento" class="form-input" placeholder="Apto, bloco, casa..." />
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Bairro" class="form-label">Bairro</label>
+                            <input asp-for="Bairro" class="form-input" id="bairroField" />
+                            <span asp-validation-for="Bairro" class="field-error"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Cidade" class="form-label">Cidade</label>
+                        <input asp-for="Cidade" class="form-input" id="cidadeField" />
+                        <span asp-validation-for="Cidade" class="field-error"></span>
+                    </div>
+
+                    <!-- Opções de frete -->
+                    @if (Model.OpcoesEntrega.Any())
+                    {
+                        <div class="shipping-options" style="margin-top:1.5rem">
+                            <h4>Selecionar Entrega</h4>
+                            @foreach (var op in Model.OpcoesEntrega)
+                            {
+                                <label class="shipping-option-card">
+                                    <input type="radio" name="MetodoEntrega" value="@op.Nome"
+                                           data-valor="@op.Valor.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                           @(Model.MetodoEntrega == op.Nome ? "checked" : "") />
+                                    <div class="shipping-option-card__info">
+                                        <strong>@op.Nome</strong>
+                                        <span>@op.PrazoDias dias úteis</span>
+                                    </div>
+                                    <span class="shipping-option-card__price">
+                                        @(op.Valor == 0 ? "Grátis" : "R$ " + op.Valor.ToString("N2"))
+                                    </span>
+                                </label>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- Pagamento -->
+                <div class="checkout-section">
+                    <h2 class="checkout-section__title"><span>3</span> Cupom de Desconto</h2>
+                    <div style="display:flex;gap:.75rem">
+                        <input type="text" id="cupomInput" placeholder="Digite seu cupom" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:#fff;padding:.6rem 1rem;font-size:.875rem;text-transform:uppercase" />
+                        <button type="button" onclick="aplicarCupom()" class="btn btn--ghost">Aplicar</button>
+                    </div>
+                    <div id="cupomMsg" style="margin-top:.5rem;font-size:.82rem"></div>
+                    <input type="hidden" name="CupomCodigo" id="cupomHidden" value="@Model.CupomCodigo" />
+                </div>
+
+                <!-- Pagamento -->
+                <div class="checkout-section">
+                    <h2 class="checkout-section__title"><span>4</span> Pagamento</h2>
+
+                    <div class="payment-methods">
+                        <label class="payment-method @(Model.MetodoPagamento == EssenzStore.Models.PaymentMethod.Pix ? "active" : "")">
+                            <input type="radio" name="MetodoPagamento" value="Pix"
+                                   @(Model.MetodoPagamento == EssenzStore.Models.PaymentMethod.Pix ? "checked" : "")
+                                   onchange="showPaymentForm(this.value)" />
+                            <i class="fab fa-pix"></i> PIX
+                            <span class="payment-method__badge">-10%</span>
+                        </label>
+                        <label class="payment-method @(Model.MetodoPagamento == EssenzStore.Models.PaymentMethod.CreditCard ? "active" : "")">
+                            <input type="radio" name="MetodoPagamento" value="CreditCard"
+                                   @(Model.MetodoPagamento == EssenzStore.Models.PaymentMethod.CreditCard ? "checked" : "")
+                                   onchange="showPaymentForm(this.value)" />
+                            <i class="fas fa-credit-card"></i> Cartão de Crédito
+                        </label>
+                        <label class="payment-method @(Model.MetodoPagamento == EssenzStore.Models.PaymentMethod.Boleto ? "active" : "")">
+                            <input type="radio" name="MetodoPagamento" value="Boleto"
+                                   @(Model.MetodoPagamento == EssenzStore.Models.PaymentMethod.Boleto ? "checked" : "")
+                                   onchange="showPaymentForm(this.value)" />
+                            <i class="fas fa-barcode"></i> Boleto
+                        </label>
+                    </div>
+
+                    <div id="payform-Pix" class="payform" style="@(Model.MetodoPagamento != EssenzStore.Models.PaymentMethod.CreditCard ? "" : "display:none")">
+                        <div class="pix-info">
+                            <i class="fab fa-pix pix-info__icon"></i>
+                            <div>
+                                <strong>Pague com PIX e ganhe 10% de desconto!</strong>
+                                <p>Após confirmar o pedido, você receberá o QR Code para pagamento. Prazo de 30 minutos para pagar.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="payform-CreditCard" class="payform" style="display:none">
+                        <div class="form-row">
+                            <div class="form-group form-group--full">
+                                <label class="form-label">Número do Cartão</label>
+                                <input asp-for="CartaoNumero" class="form-input" placeholder="0000 0000 0000 0000" maxlength="19" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Nome no Cartão</label>
+                            <input asp-for="CartaoNome" class="form-input" placeholder="Como no cartão" />
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Validade</label>
+                                <input asp-for="CartaoValidade" class="form-input" placeholder="MM/AA" maxlength="5" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">CVV</label>
+                                <input asp-for="CartaoCvv" class="form-input" placeholder="000" maxlength="4" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Parcelas</label>
+                                <select asp-for="CartaoParcelas" class="form-input">
+                                    @for (int i = 1; i <= 10; i++)
+                                    {
+                                        var total = Model.Total;
+                                        var parc = total / i;
+                                        <option value="@i">@i x de R$ @parc.ToString("N2") @(i == 1 ? "à vista" : "sem juros")</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="payform-Boleto" class="payform" style="display:none">
+                        <div class="pix-info">
+                            <i class="fas fa-barcode pix-info__icon"></i>
+                            <div>
+                                <strong>Boleto Bancário</strong>
+                                <p>Prazo de pagamento: até 3 dias úteis. O pedido será processado após confirmação do pagamento.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumo do pedido -->
+            <div class="checkout-summary">
+                <h3>Resumo do Pedido</h3>
+
+                <div class="checkout-items">
+                    @foreach (var item in Model.Items)
+                    {
+                        <div class="checkout-item">
+                            <img src="@(item.ImageUrl ?? "/img/placeholder-product.jpg")" alt="@item.NomeProduto" class="checkout-item__img" />
+                            <div class="checkout-item__info">
+                                <span class="checkout-item__name">@item.NomeProduto</span>
+                                @if (!string.IsNullOrEmpty(item.Tamanho)) { <span class="checkout-item__var">@item.Tamanho</span> }
+                                <span class="checkout-item__qty">x@item.Quantidade</span>
+                            </div>
+                            <span class="checkout-item__price">R$ @item.Subtotal.ToString("N2")</span>
+                        </div>
+                    }
+                </div>
+
+                <div class="checkout-summary__values">
+                    <div class="summary-row">
+                        <span>Subtotal</span>
+                        <span>R$ @Model.Subtotal.ToString("N2")</span>
+                    </div>
+                    @if (Model.Desconto > 0)
+                    {
+                        <div class="summary-row summary-row--discount">
+                            <span>Desconto</span>
+                            <span>- R$ @Model.Desconto.ToString("N2")</span>
+                        </div>
+                    }
+                    <div class="summary-row">
+                        <span>Frete</span>
+                        <span id="freteSummary">@(Model.ValorFrete == 0 ? "Grátis" : "R$ " + Model.ValorFrete.ToString("N2"))</span>
+                    </div>
+                    <div class="summary-row summary-row--total">
+                        <span>Total</span>
+                        <span id="totalSummary">R$ @Model.Total.ToString("N2")</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn--primary btn--lg btn--block">
+                    <i class="fas fa-lock"></i> Confirmar Pedido
+                </button>
+
+                <div class="cart-summary__secure" style="margin-top:1rem">
+                    <i class="fas fa-lock"></i> Ambiente 100% seguro
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+    function showPaymentForm(method) {
+        document.querySelectorAll('.payform').forEach(f => f.style.display = 'none');
+        document.querySelectorAll('.payment-method').forEach(l => l.classList.remove('active'));
+        const form = document.getElementById('payform-' + method);
+        if (form) form.style.display = 'block';
+        const radio = document.querySelector(`input[value="${method}"]`);
+        if (radio) radio.closest('.payment-method').classList.add('active');
+    }
+
+    document.getElementById('lookupCep')?.addEventListener('click', async () => {
+        const cep = document.getElementById('cepField').value.replace(/\D/g, '');
+        if (cep.length < 8) return;
+        const r = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        const d = await r.json();
+        if (!d.erro) {
+            document.getElementById('ruaField').value = d.logradouro || '';
+            document.getElementById('bairroField').value = d.bairro || '';
+            document.getElementById('cidadeField').value = d.localidade || '';
+            document.getElementById('estadoField').value = d.uf || '';
+            // Auto-cotar frete
+            cotarFrete(cep);
+        }
+    });
+
+    // CEP automático ao digitar 8 dígitos
+    document.getElementById('cepField')?.addEventListener('input', async function () {
+        const cep = this.value.replace(/\D/g, '');
+        if (cep.length === 8) document.getElementById('lookupCep')?.click();
+    });
+
+    async function cotarFrete(cep) {
+        const r = await fetch('/Checkout/QuoteFrete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': document.querySelector('input[name=__RequestVerificationToken]').value },
+            body: 'cep=' + encodeURIComponent(cep)
+        });
+        const opts = await r.json();
+        if (opts && opts.length > 0) {
+            const container = document.getElementById('freteOpcoes') || criarFreteContainer();
+            container.innerHTML = opts.map((o, i) => `
+                <label class="shipping-option-card" style="display:flex;align-items:center;gap:1rem;padding:.75rem 1rem;border:1px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:.5rem">
+                    <input type="radio" name="MetodoEntrega" value="${o.nome}" data-valor="${o.valor}" ${i === 0 ? 'checked' : ''} onchange="atualizarFrete(this)" />
+                    <div style="flex:1"><strong style="font-size:.875rem">${o.nome}</strong><div style="font-size:.78rem;color:var(--text3)">${o.prazoDias} dias úteis</div></div>
+                    <strong style="color:var(--gold)">${o.valor === 0 ? 'Grátis' : 'R$ ' + o.valor.toFixed(2).replace('.',',')}</strong>
+                </label>`).join('');
+            // Aplicar frete da primeira opção
+            if (opts[0]) atualizarFrete(container.querySelector('input[type=radio]'));
+        }
+    }
+
+    function criarFreteContainer() {
+        const div = document.createElement('div');
+        div.id = 'freteOpcoes';
+        div.style.marginTop = '1rem';
+        document.getElementById('estadoField')?.closest('.checkout-section')?.appendChild(div);
+        return div;
+    }
+
+    function atualizarFrete(radio) {
+        const valor = parseFloat(radio?.dataset?.valor || '0');
+        const freteEl = document.getElementById('freteSummary');
+        const totalEl = document.getElementById('totalSummary');
+        const freteHidden = document.querySelector('input[name=ValorFrete]');
+        if (freteHidden) freteHidden.value = valor;
+        if (freteEl) freteEl.textContent = valor === 0 ? 'Grátis' : 'R$ ' + valor.toFixed(2).replace('.',',');
+        // Recalcular total
+        if (totalEl) {
+            const subtotal = parseFloat(totalEl.dataset?.subtotal || totalEl.textContent.replace(/[^\d,]/g,'').replace(',','.'));
+            // Usar valor de subtotal do hidden field
+            const subEl = document.getElementById('subtotalValue');
+            if (subEl) {
+                const sub = parseFloat(subEl.value || '0');
+                const desc = parseFloat(document.getElementById('descontoValue')?.value || '0');
+                totalEl.textContent = 'R$ ' + (sub - desc + valor).toFixed(2).replace('.',',');
+            }
+        }
+    }
+
+    async function aplicarCupom() {
+        const codigo = document.getElementById('cupomInput')?.value;
+        if (!codigo) return;
+        const token = document.querySelector('input[name=__RequestVerificationToken]')?.value;
+        const r = await fetch('/Cart/ApplyCoupon', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest', 'RequestVerificationToken': token },
+            body: 'Codigo=' + encodeURIComponent(codigo)
+        });
+        const d = await r.json();
+        const msg = document.getElementById('cupomMsg');
+        if (msg) {
+            msg.textContent = d.message;
+            msg.style.color = d.success ? '#10b981' : '#ef4444';
+        }
+        if (d.success) {
+            document.getElementById('cupomHidden').value = codigo;
+            // Atualizar total no resumo
+            const totalEl = document.getElementById('totalSummary');
+            if (totalEl && d.total) totalEl.textContent = 'R$ ' + d.total.toFixed(2).replace('.',',');
+        }
+    }
+</script>
+}

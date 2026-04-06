@@ -1,0 +1,54 @@
+@model List<EssenzStore.Models.ViewModels.AdminTeamMemberViewModel>
+@{
+    ViewData["Title"] = "Equipe & Permissões";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    string q = (ViewBag.Q as string) ?? "";
+}
+
+<div class="adm-card">
+    <form method="get" style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.25rem">
+        <input type="text" name="q" value="@q" placeholder="Buscar por nome ou e-mail..." style="background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.5rem .9rem;font-size:.875rem;min-width:240px" />
+        <button type="submit" class="btn-adm btn-adm--ghost btn-adm--sm"><i class="fas fa-search"></i> Buscar</button>
+        <a href="/admin/equipe" class="btn-adm btn-adm--ghost btn-adm--sm">Limpar</a>
+    </form>
+
+    <div class="adm-table-wrap">
+        <table class="adm-table">
+            <thead>
+                <tr><th>Colaborador</th><th>E-mail</th><th>Permissão</th><th>Status</th><th>Desde</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var m in Model)
+                {
+                    <tr>
+                        <td><strong>@m.Nome</strong></td>
+                        <td>@m.Email</td>
+                        <td>
+                            <form asp-action="AtualizarPermissao" asp-controller="Admin" asp-route-id="@m.UserId" method="post" style="display:flex;gap:.5rem;align-items:center">
+                                @Html.AntiForgeryToken()
+                                <select name="permissao" style="max-width:120px">
+                                    <option value="Manager" selected="@(m.Permissao == "Manager")">Manager</option>
+                                    <option value="Admin" selected="@(m.Permissao == "Admin")">Admin</option>
+                                </select>
+                                <select name="ativo" style="max-width:100px">
+                                    <option value="true" selected="@m.Ativo">Ativo</option>
+                                    <option value="false" selected="@(!m.Ativo)">Inativo</option>
+                                </select>
+                                <button type="submit" class="btn-adm btn-adm--gold btn-adm--sm">Salvar</button>
+                            </form>
+                        </td>
+                        <td>
+                            <span class="badge badge--@(m.Ativo ? "active" : "inactive")">@(m.Ativo ? "Ativo" : "Inativo")</span>
+                        </td>
+                        <td style="color:#666">@m.CreatedAt.ToString("dd/MM/yyyy")</td>
+                        <td></td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6" style="text-align:center;color:#555;padding:2rem">Nenhum colaborador com perfil administrativo encontrado.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

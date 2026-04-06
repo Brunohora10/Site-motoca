@@ -1,0 +1,309 @@
+@model EssenzStore.Models.ViewModels.HomeViewModel
+@{
+    ViewData["Title"] = "Home";
+    const string heroIllustrationUrl = "https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=1600&q=80";
+    const string categoryIllustrationUrl = "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=80";
+    const string productIllustrationUrl = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=900&q=80";
+}
+
+<!-- Hero Banner -->
+<section class="hero">
+    @if (Model.Banners.Any())
+    {
+        <div class="hero__slider" id="heroSlider">
+            @foreach (var banner in Model.Banners)
+            {
+                var bannerImage = string.IsNullOrWhiteSpace(banner.ImagemDesktop) ? heroIllustrationUrl : banner.ImagemDesktop;
+                <div class="hero__slide" style="background-image: url('@bannerImage')">
+                    <div class="container hero__content">
+                        <p class="hero__eyebrow">@banner.Subtitulo</p>
+                        <h1 class="hero__title">@banner.Titulo</h1>
+                        @if (!string.IsNullOrEmpty(banner.Link))
+                        {
+                            <a href="@banner.Link" class="btn btn--light btn--lg">@(banner.TextoBotao ?? "Ver coleção")</a>
+                        }
+                    </div>
+                </div>
+            }
+            @if (Model.Banners.Count > 1)
+            {
+                <div class="hero__controls">
+                    <button class="hero__prev" id="heroPrev"><i class="fas fa-chevron-left"></i></button>
+                    <div class="hero__dots" id="heroDots"></div>
+                    <button class="hero__next" id="heroNext"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="hero__slide hero__slide--default" style="background-image: url('@heroIllustrationUrl')">
+            <div class="container hero__content">
+                <p class="hero__eyebrow">Nova Coleção</p>
+                <h1 class="hero__title">Vista-se<br />com estilo</h1>
+                <p class="hero__sub">Moda masculina premium para o homem moderno</p>
+                <a href="/Products/Index" class="btn btn--light btn--lg">Explorar coleção</a>
+            </div>
+        </div>
+    }
+</section>
+
+<!-- Benefícios -->
+<section class="benefits">
+    <div class="container benefits__grid">
+        <div class="benefit">
+            <i class="fas fa-truck benefit__icon"></i>
+            <div>
+                <strong>Frete Grátis</strong>
+                <span>Acima de R$299</span>
+            </div>
+        </div>
+        <div class="benefit">
+            <i class="fas fa-undo benefit__icon"></i>
+            <div>
+                <strong>Troca Fácil</strong>
+                <span>30 dias para trocar</span>
+            </div>
+        </div>
+        <div class="benefit">
+            <i class="fas fa-lock benefit__icon"></i>
+            <div>
+                <strong>Pagamento Seguro</strong>
+                <span>Ambiente criptografado</span>
+            </div>
+        </div>
+        <div class="benefit">
+            <i class="fas fa-headset benefit__icon"></i>
+            <div>
+                <strong>Suporte 24h</strong>
+                <span>Via chat e WhatsApp</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categorias em Destaque -->
+@if (Model.CategoriesDestaque.Any())
+{
+    <section class="section">
+        <div class="container">
+            <div class="section__header">
+                <h2 class="section__title">Comprar por Categoria</h2>
+                <a href="/Products/Index" class="section__link">Ver tudo <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="categories-grid">
+                @foreach (var cat in Model.CategoriesDestaque)
+                {
+                    <a href="/categoria/@cat.Slug" class="category-card">
+                        @if (!string.IsNullOrEmpty(cat.ImagemUrl))
+                        {
+                            <img src="@cat.ImagemUrl" alt="@cat.Nome" loading="lazy" onerror="this.onerror=null;this.src='@categoryIllustrationUrl';" />
+                        }
+                        else
+                        {
+                            <img src="@categoryIllustrationUrl" alt="@cat.Nome" loading="lazy" />
+                        }
+                        <div class="category-card__label">@cat.Nome</div>
+                    </a>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+<!-- Lançamentos -->
+@if (Model.Lancamentos.Any())
+{
+    <section class="section section--dark">
+        <div class="container">
+            <div class="section__header">
+                <h2 class="section__title">Lançamentos</h2>
+                <a href="/Products/Index?SomenteLancamentos=true" class="section__link">Ver todos <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="products-grid">
+                @foreach (var p in Model.Lancamentos)
+                {
+                    @await Html.PartialAsync("_ProductCard", p)
+                }
+            </div>
+        </div>
+    </section>
+}
+
+<!-- Produto Destaque -->
+@if (Model.ProdutoMomento != null)
+{
+    var produto = Model.ProdutoMomento;
+    var precoExibicao = produto.PrecoAtual;
+    <section class="product-highlight">
+        <div class="container product-highlight__inner">
+            <div class="product-highlight__img">
+                <img src="@(produto.MainImage?.Url ?? productIllustrationUrl)" alt="@produto.Nome" loading="lazy" onerror="this.onerror=null;this.src='@productIllustrationUrl';" />
+            </div>
+            <div class="product-highlight__content">
+                <span class="product-highlight__badge">Produto em Destaque</span>
+                <h2>@produto.Nome</h2>
+                <p>@produto.DescricaoCurta</p>
+                <div class="product-highlight__price">
+                    @if (produto.PrecoPromocional.HasValue)
+                    {
+                        <span class="price__old">R$ @produto.Preco.ToString("N2")</span>
+                    }
+                    <span class="price__current">R$ @precoExibicao.ToString("N2")</span>
+                    <span class="price__installment">ou 10x de R$ @((precoExibicao / 10).ToString("N2")) sem juros</span>
+                </div>
+                <a href="/produto/@produto.Slug" class="btn btn--primary btn--lg">Ver produto</a>
+            </div>
+        </div>
+    </section>
+}
+
+<!-- Mais Vendidos -->
+@if (Model.MaisVendidos.Any())
+{
+    <section class="section">
+        <div class="container">
+            <div class="section__header">
+                <h2 class="section__title">Mais Vendidos</h2>
+                <a href="/Products/Index?Sort=mais-vendidos" class="section__link">Ver todos <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="products-grid">
+                @foreach (var p in Model.MaisVendidos)
+                {
+                    @await Html.PartialAsync("_ProductCard", p)
+                }
+            </div>
+        </div>
+    </section>
+}
+
+<!-- Marcas -->
+@if (Model.MarcasDestaque.Any())
+{
+    <section class="section brands-section">
+        <div class="container">
+            <h2 class="section__title section__title--center">Nossas Marcas</h2>
+            <div class="brands-grid">
+                @foreach (var brand in Model.MarcasDestaque)
+                {
+                    <a href="/marca/@brand.Slug" class="brand-item" title="@brand.Nome">
+                        @if (!string.IsNullOrEmpty(brand.LogoUrl))
+                        {
+                            <img src="@brand.LogoUrl" alt="@brand.Nome" loading="lazy" />
+                        }
+                        else
+                        {
+                            <span>@brand.Nome</span>
+                        }
+                    </a>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+<!-- Newsletter -->
+<section class="newsletter">
+    <div class="container newsletter__inner">
+        <div class="newsletter__content">
+            <h2>Fique por dentro das novidades</h2>
+            <p>Receba lançamentos, promoções exclusivas e conteúdos de estilo direto no seu e-mail.</p>
+        </div>
+        <form class="newsletter__form" id="newsletterForm">
+            <input type="email" placeholder="Seu melhor e-mail" class="newsletter__input" required />
+            <button type="submit" class="btn btn--primary">Cadastrar</button>
+        </form>
+    </div>
+</section>
+
+<!-- Depoimentos -->
+<section class="testimonials">
+    <div class="container">
+        <div class="section__header">
+            <h2 class="section__title">Depoimentos reais</h2>
+            <span class="testimonials__source"><i class="fab fa-google"></i> Avaliações verificadas Google</span>
+        </div>
+        <div class="testimonials__grid">
+            <div class="testimonial-card">
+                <div class="testimonial-card__stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                <p class="testimonial-card__text">"Melhor loja de moda masculina! Qualidade das peças é top, recomendo pra todos sem exceção. Fora o atendimento que é 5 estrelas tanto online quanto presencial."</p>
+                <div class="testimonial-card__author">
+                    <div class="testimonial-card__avatar">C</div>
+                    <div>
+                        <div class="testimonial-card__name">Carlos M.</div>
+                        <div class="testimonial-card__location">São Paulo, SP</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="testimonial-card__stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                <p class="testimonial-card__text">"Qualidade e atendimento top! Fiz meu primeiro pedido com receio, mas chegou perfeito, embalado com cuidado. Já fiz 3 pedidos e todos impecáveis."</p>
+                <div class="testimonial-card__author">
+                    <div class="testimonial-card__avatar">R</div>
+                    <div>
+                        <div class="testimonial-card__name">Rafael S.</div>
+                        <div class="testimonial-card__location">Rio de Janeiro, RJ</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="testimonial-card__stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                <p class="testimonial-card__text">"Meus kits todos comprei aqui, qualidade das peças é incrível. Atendimento monstro, entrega super rápida. Com certeza vou comprar mais!"</p>
+                <div class="testimonial-card__author">
+                    <div class="testimonial-card__avatar">B</div>
+                    <div>
+                        <div class="testimonial-card__name">Bruno T.</div>
+                        <div class="testimonial-card__location">Florianópolis, SC</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="testimonial-card__stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                <p class="testimonial-card__text">"Produtos de excelente qualidade! O site é fácil de usar, pagamento seguro e a entrega foi mais rápida do que esperava. Nota 10!"</p>
+                <div class="testimonial-card__author">
+                    <div class="testimonial-card__avatar">M</div>
+                    <div>
+                        <div class="testimonial-card__name">Marcelo A.</div>
+                        <div class="testimonial-card__location">Curitiba, PR</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Sobre a loja -->
+<section class="about-section">
+    <div class="container">
+        <div class="about-section__inner">
+            <div class="about-section__img">
+                <img src="/img/about-store.jpg" alt="Essenz Store" onerror="this.style.background='var(--bg4)';this.style.aspectRatio='4/5';this.removeAttribute('src')" />
+                <div class="about-section__img-badge">
+                    <big>+1000</big>
+                    <small>Envios por ano</small>
+                </div>
+            </div>
+            <div class="about-section__content">
+                <span class="hero__eyebrow">Nossa história</span>
+                <h2>Moda com identidade, estilo e atitude</h2>
+                <p>Somos mais do que uma loja — somos um movimento de estilo, atitude e autenticidade. Nossa missão é levar o que há de melhor no universo da moda masculina, com a máxima qualidade e o melhor custo-benefício do mercado.</p>
+                <p>Cada peça, cada coleção, cada detalhe é pensado para traduzir a identidade única de quem veste a Essenz Store. Com uma comunidade que cresce a cada ano, seguimos firmes no propósito de transformar tendências em experiências.</p>
+                <div class="about-stats">
+                    <div class="about-stat">
+                        <span class="about-stat__num">+1000</span>
+                        <span class="about-stat__label">Clientes felizes</span>
+                    </div>
+                    <div class="about-stat">
+                        <span class="about-stat__num">+500</span>
+                        <span class="about-stat__label">Produtos</span>
+                    </div>
+                    <div class="about-stat">
+                        <span class="about-stat__num">5★</span>
+                        <span class="about-stat__label">Avaliação média</span>
+                    </div>
+                </div>
+                <a href="/paginas/sobre-nos" class="btn btn--ghost">Conheça nossa história <i class="fas fa-arrow-right"></i></a>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,54 @@
+@model List<EssenzStore.Models.ApplicationUser>
+@{
+    ViewData["Title"] = "Clientes";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    int page = ViewBag.Page ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    string? q = ViewBag.Q;
+}
+
+<div class="adm-card">
+    <form method="get" style="display:flex;gap:.75rem;margin-bottom:1.25rem">
+        <input type="text" name="q" value="@q" placeholder="Buscar por nome ou e-mail..."
+               style="max-width:300px;background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.5rem .9rem;font-size:.875rem" />
+        <button type="submit" class="btn-adm btn-adm--ghost btn-adm--sm"><i class="fas fa-search"></i></button>
+        @if (!string.IsNullOrEmpty(q)) { <a href="/admin/clientes" class="btn-adm btn-adm--ghost btn-adm--sm">Limpar</a> }
+    </form>
+
+    <div class="adm-table-wrap">
+        <table class="adm-table">
+            <thead>
+                <tr><th>Nome</th><th>E-mail</th><th>Telefone</th><th>CPF</th><th>Cadastrado em</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var u in Model)
+                {
+                    <tr>
+                        <td><strong>@u.Nome</strong></td>
+                        <td style="color:#888">@u.Email</td>
+                        <td style="color:#888">@(u.PhoneNumber ?? "—")</td>
+                        <td style="color:#666">@(u.Cpf ?? "—")</td>
+                        <td style="color:#666;font-size:.8rem">@u.CreatedAt.ToString("dd/MM/yyyy")</td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="5" style="text-align:center;color:#555;padding:2rem">Nenhum cliente encontrado.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (totalPages > 1)
+    {
+        <div class="adm-pagination">
+            @if (page > 1) { <a href="?page=@(page - 1)&q=@q"><i class="fas fa-chevron-left"></i></a> }
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                if (i == page) { <span class="active">@i</span> }
+                else { <a href="?page=@i&q=@q">@i</a> }
+            }
+            @if (page < totalPages) { <a href="?page=@(page + 1)&q=@q"><i class="fas fa-chevron-right"></i></a> }
+        </div>
+    }
+</div>

@@ -1,0 +1,32 @@
+@{
+    ViewData["Title"] = "Pedido Confirmado!";
+    var orderId = ViewData["OrderId"];
+    var numero = ViewData["OrderNumber"];
+}
+
+<div class="container" style="padding:5rem 1rem;text-align:center">
+    <div class="success-icon">
+        <i class="fas fa-check-circle"></i>
+    </div>
+    <h1 style="font-size:2rem;margin:1.5rem 0 0.5rem">Pedido Confirmado! 🎉</h1>
+    <p style="color:#aaa;font-size:1.1rem">Obrigado pela sua compra. Seu pedido foi recebido com sucesso.</p>
+
+    @if (numero != null)
+    {
+        <div class="success-order-num">
+            Número do pedido: <strong>#@numero</strong>
+        </div>
+    }
+
+    <p style="color:#888;margin:1.5rem 0">
+        Você receberá um e-mail de confirmação com os detalhes e o código de rastreamento assim que seu pedido for despachado.
+    </p>
+
+    <div class="success-actions">
+        @if (orderId != null)
+        {
+            <a href="/Orders/Detail/@orderId" class="btn btn--primary btn--lg">Ver meu pedido</a>
+        }
+        <a href="/Products/Index" class="btn btn--ghost btn--lg">Continuar comprando</a>
+    </div>
+</div>

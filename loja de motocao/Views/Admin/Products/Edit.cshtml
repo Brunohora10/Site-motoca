@@ -1,0 +1,260 @@
+@model EssenzStore.Models.ViewModels.AdminProductViewModel
+@{
+    ViewData["Title"] = "Editar Produto";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section TopbarActions {
+    <a href="/admin/produtos" class="btn-adm btn-adm--ghost btn-adm--sm"><i class="fas fa-arrow-left"></i> Voltar</a>
+    <a href="/Products/@Model.Slug" target="_blank" class="btn-adm btn-adm--ghost btn-adm--sm"><i class="fas fa-external-link-alt"></i> Ver na loja</a>
+}
+
+<form asp-action="EditarProduto" asp-controller="Admin" asp-route-id="@Model.Id" method="post" id="frmProduto">
+    @Html.AntiForgeryToken()
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;align-items:start">
+
+        <!-- Coluna principal -->
+        <div>
+            <div class="adm-card">
+                <p class="adm-card__title">Informações Básicas</p>
+                <div class="adm-form-grid">
+                    <div class="form-group adm-form-grid--full">
+                        <label>Nome do Produto *</label>
+                        <input asp-for="Nome" />
+                        <span asp-validation-for="Nome" class="field-validation-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>Marca *</label>
+                        <select asp-for="BrandId">
+                            @foreach (var b in Model.Brands)
+                            {
+                                <option value="@b.Id" selected="@(b.Id == Model.BrandId)">@b.Nome</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoria *</label>
+                        <select asp-for="CategoryId">
+                            @foreach (var c in Model.Categories)
+                            {
+                                <option value="@c.Id" selected="@(c.Id == Model.CategoryId)">@c.Nome</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Preço (R$) *</label>
+                        <input asp-for="Preco" type="number" step="0.01" />
+                    </div>
+                    <div class="form-group">
+                        <label>Preço Promocional (R$)</label>
+                        <input asp-for="PrecoPromocional" type="number" step="0.01" />
+                    </div>
+                    <div class="form-group adm-form-grid--full">
+                        <label>Descrição Curta</label>
+                        <input asp-for="DescricaoCurta" />
+                    </div>
+                    <div class="form-group adm-form-grid--full">
+                        <label>Descrição Completa</label>
+                        <textarea asp-for="DescricaoCompleta" style="min-height:160px"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="adm-card">
+                <p class="adm-card__title">Especificações</p>
+                <div class="adm-form-grid">
+                    <div class="form-group">
+                        <label>Composição</label>
+                        <input asp-for="Composicao" />
+                    </div>
+                    <div class="form-group">
+                        <label>Modelagem</label>
+                        <input asp-for="Modelagem" />
+                    </div>
+                    <div class="form-group adm-form-grid--full">
+                        <label>Instruções de Lavagem</label>
+                        <input asp-for="InstrucoesLavagem" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Variantes -->
+            <div class="adm-card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+                    <p class="adm-card__title" style="margin:0">Variantes (Estoque)</p>
+                    <button type="button" class="btn-adm btn-adm--gold btn-adm--sm" onclick="abrirModalVariante(null)">
+                        <i class="fas fa-plus"></i> Adicionar
+                    </button>
+                </div>
+                <div class="adm-table-wrap">
+                    <table class="adm-table" id="tblVariantes">
+                        <thead>
+                            <tr><th>Cor</th><th>Tamanho</th><th>SKU</th><th>Estoque</th><th>Preço Extra</th><th>Ativo</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var v in Model.Variants)
+                            {
+                                <tr id="var-@v.Id">
+                                    <td>@(v.Cor ?? "—")</td>
+                                    <td>@(v.Tamanho ?? "—")</td>
+                                    <td style="color:#666">@(v.Sku ?? "—")</td>
+                                    <td><span class="badge badge--@(v.Estoque == 0 ? "cancelled" : v.Estoque <= 3 ? "low" : "active")">@v.Estoque</span></td>
+                                    <td>@(v.Preco.HasValue ? "R$ " + v.Preco.Value.ToString("N2") : "—")</td>
+                                    <td><span class="badge badge--@(v.Ativo ? "active" : "inactive")">@(v.Ativo ? "Sim" : "Não")</span></td>
+                                    <td>
+                                        <div style="display:flex;gap:.4rem">
+                                            <button type="button" class="btn-adm btn-adm--ghost btn-adm--sm"
+                                                    onclick="abrirModalVariante({id:@v.Id,cor:'@(v.Cor?.Replace("'","") ?? "")',tamanho:'@(v.Tamanho?.Replace("'","") ?? "")',sku:'@(v.Sku?.Replace("'","") ?? "")',estoque:@v.Estoque,preco:@(v.Preco ?? 0),ativo:@(v.Ativo ? "true" : "false")})">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <form asp-action="ExcluirVariante" asp-controller="Admin" method="post" onsubmit="return confirm('Excluir variante?')">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="produtoId" value="@Model.Id" />
+                                                <input type="hidden" name="varianteId" value="@v.Id" />
+                                                <button type="submit" class="btn-adm btn-adm--danger btn-adm--sm"><i class="fas fa-trash"></i></button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Imagens -->
+            <div class="adm-card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+                    <p class="adm-card__title" style="margin:0">Imagens</p>
+                    <button type="button" class="btn-adm btn-adm--gold btn-adm--sm" onclick="document.getElementById('fileUpload').click()">
+                        <i class="fas fa-upload"></i> Upload
+                    </button>
+                </div>
+                <input type="file" id="fileUpload" accept="image/*" multiple style="display:none" onchange="uploadImagens(this)" />
+                <div style="display:flex;flex-wrap:wrap;gap:1rem" id="galeriaImagens">
+                    @foreach (var img in Model.Images)
+                    {
+                        <div style="position:relative" id="img-@img.Id">
+                            <img src="@img.Url" alt="" style="width:100px;height:100px;object-fit:cover;border-radius:8px;border:1px solid #333" onerror="this.src='/img/placeholder.jpg'" />
+                            @if (img.Destaque)
+                            {
+                                <span style="position:absolute;top:4px;left:4px;background:#c9a84c;color:#000;font-size:.6rem;padding:.1rem .4rem;border-radius:4px;font-weight:700">CAPA</span>
+                            }
+                            <form asp-action="ExcluirImagem" asp-controller="Admin" method="post" style="position:absolute;top:4px;right:4px">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="produtoId" value="@Model.Id" />
+                                <input type="hidden" name="imagemId" value="@img.Id" />
+                                <button type="submit" onclick="return confirm('Remover imagem?')" style="background:rgba(239,68,68,.8);border:none;border-radius:50%;width:22px;height:22px;color:#fff;cursor:pointer;font-size:.7rem">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </form>
+                        </div>
+                    }
+                </div>
+                <div id="uploadStatus" style="margin-top:.75rem;font-size:.8rem;color:#888"></div>
+            </div>
+
+            <div class="adm-card">
+                <p class="adm-card__title">SEO</p>
+                <div class="adm-form-grid">
+                    <div class="form-group">
+                        <label>Slug (URL)</label>
+                        <input asp-for="Slug" />
+                    </div>
+                    <div class="form-group">
+                        <label>Título SEO</label>
+                        <input asp-for="SeoTitle" />
+                    </div>
+                    <div class="form-group adm-form-grid--full">
+                        <label>Descrição SEO</label>
+                        <textarea asp-for="SeoDescription" style="min-height:70px"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coluna lateral -->
+        <div>
+            <div class="adm-card">
+                <p class="adm-card__title">Status</p>
+                <div style="display:flex;flex-direction:column;gap:.75rem">
+                    <div class="form-check"><input asp-for="Ativo" type="checkbox" id="chkAtivo" /><label for="chkAtivo">Produto ativo</label></div>
+                    <div class="form-check"><input asp-for="Destaque" type="checkbox" id="chkDestaque" /><label for="chkDestaque">Em destaque</label></div>
+                    <div class="form-check"><input asp-for="Lancamento" type="checkbox" id="chkLancamento" /><label for="chkLancamento">Lançamento</label></div>
+                    <div class="form-check"><input asp-for="MaisVendido" type="checkbox" id="chkMaisVendido" /><label for="chkMaisVendido">Mais vendido</label></div>
+                    <div class="form-check"><input asp-for="ProdutoMomento" type="checkbox" id="chkMomento" /><label for="chkMomento">Produto do momento</label></div>
+                </div>
+            </div>
+            <div class="adm-card">
+                <button type="submit" class="btn-adm btn-adm--gold" style="width:100%;justify-content:center">
+                    <i class="fas fa-save"></i> Salvar Alterações
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Modal variante -->
+<div class="adm-modal-bg" id="modalVariante">
+    <div class="adm-modal">
+        <p class="adm-modal__title" id="modalVarianteTitulo">Variante</p>
+        <form asp-action="SalvarVariante" asp-controller="Admin" method="post" id="frmVariante">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="produtoId" value="@Model.Id" />
+            <input type="hidden" name="varianteId" id="varianteId" value="0" />
+            <div class="adm-form-grid">
+                <div class="form-group"><label>Cor</label><input type="text" name="cor" id="inpCor" placeholder="Ex: Preto" /></div>
+                <div class="form-group"><label>Tamanho</label><input type="text" name="tamanho" id="inpTamanho" placeholder="P, M, G, GG, 40..." /></div>
+                <div class="form-group"><label>SKU *</label><input type="text" name="sku" id="inpSku" placeholder="SKU-001" required /></div>
+                <div class="form-group"><label>Estoque *</label><input type="number" name="estoque" id="inpEstoque" value="0" min="0" /></div>
+                <div class="form-group"><label>Preço (R$)</label><input type="number" name="preco" id="inpPreco" step="0.01" placeholder="deixe vazio = preço do produto" /></div>
+                <div class="form-group" style="justify-content:flex-end;align-items:flex-end">
+                    <div class="form-check"><input type="checkbox" name="ativo" id="inpAtivo" value="true" checked /><label for="inpAtivo">Ativo</label></div>
+                </div>
+            </div>
+            <div class="adm-modal__footer">
+                <button type="button" class="btn-adm btn-adm--ghost" onclick="fecharModal('modalVariante')">Cancelar</button>
+                <button type="submit" class="btn-adm btn-adm--gold"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function abrirModalVariante(v) {
+    document.getElementById('modalVarianteTitulo').textContent = v ? 'Editar Variante' : 'Nova Variante';
+    document.getElementById('varianteId').value = v ? v.id : 0;
+    document.getElementById('inpCor').value = v ? v.cor : '';
+    document.getElementById('inpTamanho').value = v ? v.tamanho : '';
+    document.getElementById('inpSku').value = v ? v.sku : '';
+    document.getElementById('inpEstoque').value = v ? v.estoque : 0;
+    document.getElementById('inpPreco').value = v ? v.preco : 0;
+    document.getElementById('inpAtivo').checked = v ? v.ativo : true;
+    document.getElementById('modalVariante').classList.add('open');
+}
+function fecharModal(id) { document.getElementById(id).classList.remove('open'); }
+
+async function uploadImagens(input) {
+    const status = document.getElementById('uploadStatus');
+    const files = input.files;
+    if (!files.length) return;
+    status.textContent = 'Enviando...';
+    const fd = new FormData();
+    for (const f of files) fd.append('files', f);
+
+    const resp = await fetch('/admin/produtos/@Model.Id/upload-imagem', {
+        method: 'POST',
+        body: fd,
+        headers: { 'RequestVerificationToken': document.querySelector('input[name=__RequestVerificationToken]').value }
+    });
+    if (resp.ok) {
+        status.textContent = 'Upload concluído! Recarregue para ver as imagens.';
+        setTimeout(() => location.reload(), 1200);
+    } else {
+        status.textContent = 'Erro no upload.';
+    }
+    input.value = '';
+}
+</script>
+}

@@ -1,0 +1,153 @@
+@model EssenzStore.Models.ViewModels.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard Admin";
+    Layout = "_Layout";
+}
+
+<div class="admin-layout">
+    <!-- Admin Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar__logo">ESSENZ<span>ADMIN</span></div>
+        <nav class="admin-nav">
+            <a href="/admin" class="admin-nav__item active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="/admin/produtos" class="admin-nav__item"><i class="fas fa-box"></i> Produtos</a>
+            <a href="/admin/categorias" class="admin-nav__item"><i class="fas fa-tags"></i> Categorias</a>
+            <a href="/admin/marcas" class="admin-nav__item"><i class="fas fa-trademark"></i> Marcas</a>
+            <a href="/admin/pedidos" class="admin-nav__item"><i class="fas fa-shopping-cart"></i> Pedidos</a>
+            <a href="/admin/clientes" class="admin-nav__item"><i class="fas fa-users"></i> Clientes</a>
+            <a href="/admin/cupons" class="admin-nav__item"><i class="fas fa-ticket-alt"></i> Cupons</a>
+            <a href="/admin/banners" class="admin-nav__item"><i class="fas fa-image"></i> Banners</a>
+            <div class="admin-nav__divider"></div>
+            <a href="/" class="admin-nav__item"><i class="fas fa-store"></i> Ver loja</a>
+            <form asp-controller="Account" asp-action="Logout" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="admin-nav__item admin-nav__item--logout">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+            </form>
+        </nav>
+    </aside>
+
+    <!-- Admin Content -->
+    <div class="admin-content">
+        <div class="admin-topbar">
+            <h1 class="admin-topbar__title">Dashboard</h1>
+            <div class="admin-topbar__actions">
+                <a href="/admin/produtos/criar" class="btn btn--primary btn--sm">
+                    <i class="fas fa-plus"></i> Novo produto
+                </a>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="admin-kpis">
+            <div class="kpi-card">
+                <div class="kpi-card__icon kpi-card__icon--green"><i class="fas fa-dollar-sign"></i></div>
+                <div class="kpi-card__data">
+                    <span class="kpi-card__value">R$ @Model.FaturamentoHoje.ToString("N2")</span>
+                    <span class="kpi-card__label">Faturamento hoje</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-card__icon kpi-card__icon--blue"><i class="fas fa-chart-line"></i></div>
+                <div class="kpi-card__data">
+                    <span class="kpi-card__value">R$ @Model.FaturamentoMes.ToString("N2")</span>
+                    <span class="kpi-card__label">Faturamento do mês</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-card__icon kpi-card__icon--orange"><i class="fas fa-clock"></i></div>
+                <div class="kpi-card__data">
+                    <span class="kpi-card__value">@Model.PedidosPendentes</span>
+                    <span class="kpi-card__label">Pedidos pendentes</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-card__icon kpi-card__icon--purple"><i class="fas fa-users"></i></div>
+                <div class="kpi-card__data">
+                    <span class="kpi-card__value">@Model.TotalClientes</span>
+                    <span class="kpi-card__label">Clientes</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-card__icon kpi-card__icon--gold"><i class="fas fa-receipt"></i></div>
+                <div class="kpi-card__data">
+                    <span class="kpi-card__value">R$ @Model.TicketMedio.ToString("N2")</span>
+                    <span class="kpi-card__label">Ticket médio</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-card__icon kpi-card__icon--teal"><i class="fas fa-box"></i></div>
+                <div class="kpi-card__data">
+                    <span class="kpi-card__value">@Model.TotalProdutos</span>
+                    <span class="kpi-card__label">Produtos ativos</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-grid-2">
+            <!-- Últimos Pedidos -->
+            <div class="admin-card">
+                <div class="admin-card__header">
+                    <h3>Últimos Pedidos</h3>
+                    <a href="/admin/pedidos" class="section__link">Ver todos</a>
+                </div>
+                @if (Model.UltimosPedidos.Any())
+                {
+                    <table class="admin-table">
+                        <thead>
+                            <tr><th>Pedido</th><th>Cliente</th><th>Total</th><th>Status</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var o in Model.UltimosPedidos)
+                            {
+                                <tr>
+                                    <td><strong>#@o.NumeroPedido</strong><br /><small>@o.CreatedAt.ToString("dd/MM")</small></td>
+                                    <td>@(o.User?.Nome ?? "—")</td>
+                                    <td>R$ @o.Total.ToString("N2")</td>
+                                    <td><span class="status-badge status-badge--@o.Status.ToString().ToLower()">@o.Status</span></td>
+                                    <td><a href="/admin/pedidos/@o.Id" class="btn btn--ghost btn--sm">Ver</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p style="color:#888;padding:1rem 0">Nenhum pedido ainda.</p>
+                }
+            </div>
+
+            <!-- Estoque Baixo -->
+            <div class="admin-card">
+                <div class="admin-card__header">
+                    <h3>Estoque Baixo</h3>
+                    <a href="/admin/produtos" class="section__link">Gerenciar</a>
+                </div>
+                @if (Model.EstoqueBaixo.Any())
+                {
+                    <table class="admin-table">
+                        <thead><tr><th>Produto</th><th>Estoque</th></tr></thead>
+                        <tbody>
+                            @foreach (var (nome, estoque) in Model.EstoqueBaixo)
+                            {
+                                <tr>
+                                    <td>@nome</td>
+                                    <td>
+                                        <span class="stock-badge @(estoque == 0 ? "stock-badge--out" : "stock-badge--low")">
+                                            @(estoque == 0 ? "Esgotado" : estoque + " un.")
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p style="color:#888;padding:1rem 0">Estoque em dia ✅</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>

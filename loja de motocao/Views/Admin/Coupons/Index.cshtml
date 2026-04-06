@@ -1,0 +1,129 @@
+@model List<EssenzStore.Models.Coupon>
+@{
+    ViewData["Title"] = "Cupons de Desconto";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section TopbarActions {
+    <button class="btn-adm btn-adm--gold btn-adm--sm" onclick="abrirModal('modalCupom')">
+        <i class="fas fa-plus"></i> Novo Cupom
+    </button>
+}
+
+<div class="adm-card">
+    <div class="adm-table-wrap">
+        <table class="adm-table">
+            <thead>
+                <tr><th>Código</th><th>Tipo</th><th>Valor</th><th>Mínimo</th><th>Uso</th><th>Validade</th><th>Ativo</th><th style="text-align:right">Ações</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model)
+                {
+                    <tr>
+                        <td><strong style="letter-spacing:.05em">@c.Codigo</strong></td>
+                        <td style="color:#888">@c.Tipo</td>
+                        <td><strong>@(c.Tipo == EssenzStore.Models.CouponType.Percentual ? c.Valor + "%" : "R$ " + c.Valor.ToString("N2"))</strong></td>
+                        <td style="color:#888">@(c.ValorMinimo > 0 ? "R$ " + c.ValorMinimo.ToString("N2") : "—")</td>
+                        <td style="color:#888">@c.UsoAtual / @(c.UsoMaximo.HasValue ? c.UsoMaximo.ToString() : "∞")</td>
+                        <td style="color:#666;font-size:.8rem">
+                            @(c.DataInicio.HasValue ? c.DataInicio.Value.ToString("dd/MM/yy") : "—")
+                            @(c.DataFim.HasValue ? " até " + c.DataFim.Value.ToString("dd/MM/yy") : "")
+                        </td>
+                        <td><span class="badge badge--@(c.Ativo ? "active" : "inactive")">@(c.Ativo ? "Sim" : "Não")</span></td>
+                        <td style="text-align:right">
+                            <button class="btn-adm btn-adm--ghost btn-adm--sm"
+                                    onclick="editarCupom({id:@c.Id,codigo:'@c.Codigo',tipo:@((int)c.Tipo),valor:@c.Valor,minimo:@c.ValorMinimo,usoMax:@(c.UsoMaximo ?? 0),ativo:@(c.Ativo ? "true" : "false")})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="8" style="text-align:center;color:#555;padding:2rem">Nenhum cupom cadastrado.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="adm-modal-bg" id="modalCupom">
+    <div class="adm-modal">
+        <p class="adm-modal__title" id="modalCupomTitulo">Novo Cupom</p>
+        <form asp-action="SalvarCupom" asp-controller="Admin" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" id="cupomId" value="0" />
+            <div class="adm-form-grid">
+                <div class="form-group">
+                    <label>Código *</label>
+                    <input type="text" name="Codigo" id="cupomCodigo" required style="text-transform:uppercase" />
+                </div>
+                <div class="form-group">
+                    <label>Tipo *</label>
+                    <select name="Tipo" id="cupomTipo">
+                        <option value="0">Percentual (%)</option>
+                        <option value="1">Valor fixo (R$)</option>
+                        <option value="2">Frete grátis</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Valor *</label>
+                    <input type="number" name="Valor" id="cupomValor" step="0.01" value="10" />
+                </div>
+                <div class="form-group">
+                    <label>Mínimo (R$)</label>
+                    <input type="number" name="ValorMinimo" id="cupomMinimo" step="0.01" value="0" />
+                </div>
+                <div class="form-group">
+                    <label>Uso máximo</label>
+                    <input type="number" name="UsoMaximo" id="cupomUsoMax" placeholder="ilimitado" />
+                </div>
+                <div class="form-group">
+                    <label>Uso por cliente</label>
+                    <input type="number" name="UsoPorCliente" placeholder="ilimitado" />
+                </div>
+                <div class="form-group">
+                    <label>Início</label>
+                    <input type="date" name="DataInicio" id="cupomInicio" />
+                </div>
+                <div class="form-group">
+                    <label>Fim</label>
+                    <input type="date" name="DataFim" id="cupomFim" />
+                </div>
+                <div class="form-group adm-form-grid--full">
+                    <label>Descrição</label>
+                    <input type="text" name="Descricao" placeholder="Descrição interna do cupom" />
+                </div>
+                <div class="form-group adm-form-grid--full">
+                    <div class="form-check">
+                        <input type="checkbox" name="Ativo" id="cupomAtivo" value="true" checked />
+                        <label for="cupomAtivo">Cupom ativo</label>
+                    </div>
+                </div>
+            </div>
+            <div class="adm-modal__footer">
+                <button type="button" class="btn-adm btn-adm--ghost" onclick="fecharModal('modalCupom')">Cancelar</button>
+                <button type="submit" class="btn-adm btn-adm--gold"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function abrirModal(id) { document.getElementById(id).classList.add('open'); }
+function fecharModal(id) { document.getElementById(id).classList.remove('open'); }
+function editarCupom(c) {
+    document.getElementById('modalCupomTitulo').textContent = 'Editar Cupom';
+    document.getElementById('cupomId').value = c.id;
+    document.getElementById('cupomCodigo').value = c.codigo;
+    document.getElementById('cupomTipo').value = c.tipo;
+    document.getElementById('cupomValor').value = c.valor;
+    document.getElementById('cupomMinimo').value = c.minimo;
+    document.getElementById('cupomUsoMax').value = c.usoMax || '';
+    document.getElementById('cupomAtivo').checked = c.ativo;
+    abrirModal('modalCupom');
+}
+</script>
+}

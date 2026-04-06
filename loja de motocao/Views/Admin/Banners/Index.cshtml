@@ -1,0 +1,140 @@
+@model List<EssenzStore.Models.Banner>
+@{
+    ViewData["Title"] = "Banners";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section TopbarActions {
+    <button class="btn-adm btn-adm--gold btn-adm--sm" onclick="abrirModal('modalBanner')">
+        <i class="fas fa-plus"></i> Novo Banner
+    </button>
+}
+
+<div class="adm-card">
+    <div class="adm-table-wrap">
+        <table class="adm-table">
+            <thead>
+                <tr><th>Prévia</th><th>Título</th><th>Posição</th><th>Ordem</th><th>Validade</th><th>Ativo</th><th style="text-align:right">Ações</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model)
+                {
+                    <tr>
+                        <td>
+                            <img src="@b.ImagemDesktop" alt="@b.Titulo" style="height:48px;width:80px;object-fit:cover;border-radius:6px;border:1px solid #333" onerror="this.style.display='none'" />
+                        </td>
+                        <td>
+                            <strong>@b.Titulo</strong><br>
+                            <small style="color:#555">@b.Subtitulo</small>
+                        </td>
+                        <td style="color:#888">@b.Posicao</td>
+                        <td>@b.Ordem</td>
+                        <td style="color:#666;font-size:.8rem">
+                            @(b.DataInicio.HasValue ? b.DataInicio.Value.ToString("dd/MM/yy") : "—")
+                            @(b.DataFim.HasValue ? " a " + b.DataFim.Value.ToString("dd/MM/yy") : "")
+                        </td>
+                        <td><span class="badge badge--@(b.Ativo ? "active" : "inactive")">@(b.Ativo ? "Sim" : "Não")</span></td>
+                        <td style="text-align:right">
+                            <button class="btn-adm btn-adm--ghost btn-adm--sm"
+                                    onclick="editarBanner({id:@b.Id,titulo:'@b.Titulo.Replace("'","&#39;")',subtitulo:'@(b.Subtitulo?.Replace("'","&#39;") ?? "")',imgDesktop:'@b.ImagemDesktop',imgMobile:'@(b.ImagemMobile ?? "")',link:'@(b.Link ?? "")',posicao:'@b.Posicao',ordem:@b.Ordem,textoBotao:'@(b.TextoBotao ?? "")',ativo:@(b.Ativo ? "true" : "false")})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="7" style="text-align:center;color:#555;padding:2rem">Nenhum banner cadastrado.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="adm-modal-bg" id="modalBanner">
+    <div class="adm-modal">
+        <p class="adm-modal__title" id="modalBannerTitulo">Novo Banner</p>
+        <form asp-action="SalvarBanner" asp-controller="Admin" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" id="bannerId" value="0" />
+            <div class="adm-form-grid">
+                <div class="form-group adm-form-grid--full">
+                    <label>Título *</label>
+                    <input type="text" name="Titulo" id="bannerTitulo" required />
+                </div>
+                <div class="form-group adm-form-grid--full">
+                    <label>Subtítulo</label>
+                    <input type="text" name="Subtitulo" id="bannerSubtitulo" />
+                </div>
+                <div class="form-group adm-form-grid--full">
+                    <label>Imagem Desktop (URL) *</label>
+                    <input type="text" name="ImagemDesktop" id="bannerImgDesktop" placeholder="https://..." />
+                </div>
+                <div class="form-group adm-form-grid--full">
+                    <label>Imagem Mobile (URL)</label>
+                    <input type="text" name="ImagemMobile" id="bannerImgMobile" placeholder="https://..." />
+                </div>
+                <div class="form-group adm-form-grid--full">
+                    <label>Link</label>
+                    <input type="text" name="Link" id="bannerLink" placeholder="/produtos" />
+                </div>
+                <div class="form-group">
+                    <label>Texto do Botão</label>
+                    <input type="text" name="TextoBotao" id="bannerBotao" placeholder="Comprar agora" />
+                </div>
+                <div class="form-group">
+                    <label>Posição</label>
+                    <select name="Posicao" id="bannerPosicao">
+                        <option value="hero">Hero (principal)</option>
+                        <option value="secondary">Secundário</option>
+                        <option value="popup">Popup</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Início</label>
+                    <input type="date" name="DataInicio" />
+                </div>
+                <div class="form-group">
+                    <label>Fim</label>
+                    <input type="date" name="DataFim" />
+                </div>
+                <div class="form-group">
+                    <label>Ordem</label>
+                    <input type="number" name="Ordem" id="bannerOrdem" value="0" />
+                </div>
+                <div class="form-group adm-form-grid--full">
+                    <div class="form-check">
+                        <input type="checkbox" name="Ativo" id="bannerAtivo" value="true" checked />
+                        <label for="bannerAtivo">Banner ativo</label>
+                    </div>
+                </div>
+            </div>
+            <div class="adm-modal__footer">
+                <button type="button" class="btn-adm btn-adm--ghost" onclick="fecharModal('modalBanner')">Cancelar</button>
+                <button type="submit" class="btn-adm btn-adm--gold"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function abrirModal(id) { document.getElementById(id).classList.add('open'); }
+function fecharModal(id) { document.getElementById(id).classList.remove('open'); }
+function editarBanner(b) {
+    document.getElementById('modalBannerTitulo').textContent = 'Editar Banner';
+    document.getElementById('bannerId').value = b.id;
+    document.getElementById('bannerTitulo').value = b.titulo;
+    document.getElementById('bannerSubtitulo').value = b.subtitulo;
+    document.getElementById('bannerImgDesktop').value = b.imgDesktop;
+    document.getElementById('bannerImgMobile').value = b.imgMobile;
+    document.getElementById('bannerLink').value = b.link;
+    document.getElementById('bannerBotao').value = b.textoBotao;
+    document.getElementById('bannerOrdem').value = b.ordem;
+    document.getElementById('bannerAtivo').checked = b.ativo;
+    for (let o of document.getElementById('bannerPosicao').options) o.selected = (o.value === b.posicao);
+    abrirModal('modalBanner');
+}
+</script>
+}

@@ -1,0 +1,142 @@
+@model EssenzStore.Models.ViewModels.AdminFinanceiroViewModel
+@{
+    ViewData["Title"] = "Financeiro & Operação";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="adm-kpis">
+    <div class="kpi">
+        <div class="kpi__icon kpi__icon--green"><i class="fas fa-calendar-week"></i></div>
+        <div>
+            <div class="kpi__value">R$ @Model.Faturamento7Dias.ToString("N2")</div>
+            <div class="kpi__label">Faturamento (7 dias)</div>
+        </div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__icon kpi__icon--blue"><i class="fas fa-calendar-alt"></i></div>
+        <div>
+            <div class="kpi__value">R$ @Model.Faturamento30Dias.ToString("N2")</div>
+            <div class="kpi__label">Faturamento (30 dias)</div>
+        </div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__icon kpi__icon--gold"><i class="fas fa-chart-line"></i></div>
+        <div>
+            <div class="kpi__value">R$ @Model.FaturamentoMesAtual.ToString("N2")</div>
+            <div class="kpi__label">Faturamento mês atual</div>
+        </div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__icon kpi__icon--red"><i class="fas fa-undo"></i></div>
+        <div>
+            <div class="kpi__value">R$ @Model.TotalReembolsosMes.ToString("N2")</div>
+            <div class="kpi__label">Reembolsos no mês</div>
+        </div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__icon kpi__icon--green"><i class="fas fa-check-circle"></i></div>
+        <div>
+            <div class="kpi__value">@Model.PedidosPagosMes</div>
+            <div class="kpi__label">Pedidos pagos no mês</div>
+        </div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__icon kpi__icon--orange"><i class="fas fa-box-open"></i></div>
+        <div>
+            <div class="kpi__value">@Model.PedidosAguardandoEnvio</div>
+            <div class="kpi__label">Aguardando envio</div>
+        </div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__icon kpi__icon--purple"><i class="fas fa-exchange-alt"></i></div>
+        <div>
+            <div class="kpi__value">@Model.DevolucoesPendentes</div>
+            <div class="kpi__label">Devoluções pendentes</div>
+        </div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;align-items:start">
+    <div class="adm-card">
+        <p class="adm-card__title">Vendas por método de pagamento (30 dias)</p>
+        <div class="adm-table-wrap">
+            <table class="adm-table">
+                <thead>
+                    <tr>
+                        <th>Método</th>
+                        <th>Pedidos</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.VendasPorMetodo)
+                    {
+                        <tr>
+                            <td><strong>@item.Metodo</strong></td>
+                            <td>@item.Pedidos</td>
+                            <td>R$ @item.Valor.ToString("N2")</td>
+                        </tr>
+                    }
+                    @if (!Model.VendasPorMetodo.Any())
+                    {
+                        <tr><td colspan="3" style="text-align:center;color:#777">Sem vendas no período.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="adm-card">
+        <p class="adm-card__title"><i class="fas fa-exclamation-triangle" style="color:#f59e0b"></i> Estoque crítico</p>
+        @if (Model.EstoqueCritico.Any())
+        {
+            <div style="display:flex;flex-direction:column;gap:.85rem">
+                @foreach (var item in Model.EstoqueCritico)
+                {
+                    <div style="display:flex;justify-content:space-between;gap:.5rem;align-items:center">
+                        <div>
+                            <div style="font-size:.82rem;color:#fff">@item.Produto</div>
+                            <small style="color:#777">@item.Sku</small>
+                        </div>
+                        <span class="badge badge--low">@item.Estoque un.</span>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p style="font-size:.82rem;color:#777">Sem alertas de estoque crítico.</p>
+        }
+    </div>
+</div>
+
+<div class="adm-card">
+    <p class="adm-card__title">Produtos sem venda há 30+ dias (com estoque)</p>
+    <div class="adm-table-wrap">
+        <table class="adm-table">
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th>Estoque</th>
+                    <th>Dias sem venda</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model.ProdutosSemVenda)
+                {
+                    <tr>
+                        <td><strong>@p.Nome</strong></td>
+                        <td>@p.EstoqueTotal un.</td>
+                        <td>@p.DiasSemVenda dias</td>
+                        <td><a class="btn-adm btn-adm--ghost btn-adm--sm" href="/admin/produtos/@p.ProdutoId/editar">Ajustar</a></td>
+                    </tr>
+                }
+                @if (!Model.ProdutosSemVenda.Any())
+                {
+                    <tr><td colspan="4" style="text-align:center;color:#777">Nenhum produto parado no período.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

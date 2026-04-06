@@ -1,0 +1,58 @@
+@model EssenzStore.Models.ViewModels.AdminOrderViewModel
+@{
+    ViewData["Title"] = "Trocas & Devoluções";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="adm-card">
+    <form method="get" style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.25rem">
+        <input type="text" name="q" value="@Model.SearchQuery" placeholder="Nº do pedido, cliente ou e-mail..." style="background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.5rem .9rem;font-size:.875rem;min-width:260px" />
+        <button type="submit" class="btn-adm btn-adm--ghost btn-adm--sm"><i class="fas fa-search"></i> Filtrar</button>
+        <a href="/admin/devolucoes" class="btn-adm btn-adm--ghost btn-adm--sm">Limpar</a>
+        <span style="margin-left:auto;font-size:.8rem;color:#666;align-self:center">@Model.TotalCount ocorrências</span>
+    </form>
+
+    <div class="adm-table-wrap">
+        <table class="adm-table">
+            <thead>
+                <tr><th>Pedido</th><th>Cliente</th><th>Status</th><th>Pagamento</th><th>Total</th><th>Atualizado em</th><th style="text-align:right">Ações</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var o in Model.Orders)
+                {
+                    <tr>
+                        <td><strong>#@o.NumeroPedido</strong></td>
+                        <td>
+                            <span>@o.NomeCliente</span><br>
+                            <small style="color:#555">@o.EmailCliente</small>
+                        </td>
+                        <td><span class="badge badge--@o.Status.ToString().ToLower()">@o.Status</span></td>
+                        <td><span class="badge badge--@o.PaymentStatus.ToString().ToLower()">@o.PaymentStatus</span></td>
+                        <td><strong>R$ @o.Total.ToString("N2")</strong></td>
+                        <td style="color:#666;font-size:.8rem">@o.UpdatedAt.ToString("dd/MM/yy HH:mm")</td>
+                        <td style="text-align:right">
+                            <a href="/admin/pedidos/@o.Id" class="btn-adm btn-adm--ghost btn-adm--sm"><i class="fas fa-eye"></i></a>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Orders.Any())
+                {
+                    <tr><td colspan="7" style="text-align:center;color:#555;padding:2rem">Nenhuma troca/devolução encontrada.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <div class="adm-pagination">
+            @if (Model.Page > 1) { <a href="?page=@(Model.Page - 1)&q=@Model.SearchQuery"><i class="fas fa-chevron-left"></i></a> }
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                if (i == Model.Page) { <span class="active">@i</span> }
+                else { <a href="?page=@i&q=@Model.SearchQuery">@i</a> }
+            }
+            @if (Model.Page < Model.TotalPages) { <a href="?page=@(Model.Page + 1)&q=@Model.SearchQuery"><i class="fas fa-chevron-right"></i></a> }
+        </div>
+    }
+</div>

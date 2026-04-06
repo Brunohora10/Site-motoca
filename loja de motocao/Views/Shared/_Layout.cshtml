@@ -1,0 +1,313 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration _cfg
+@{
+    var waNum = _cfg["Store:Whatsapp"] ?? "5548988163125";
+    var waDisplay = _cfg["Store:WhatsappDisplay"] ?? "(48) 98816-3125";
+    var freteGratis = _cfg.GetValue<decimal>("Store:FreteGratisValor", 299m);
+    var freteGratisStr = freteGratis.ToString("N0", new System.Globalization.CultureInfo("pt-BR"));
+    var ogImage = ViewData["OgImage"]?.ToString() ?? "https://essenzstore.com.br/img/og-default.jpg";
+    var pageDesc = ViewData["Description"]?.ToString() ?? "Moda masculina premium. Estilo, qualidade e sofisticação.";
+    var pageTitle = (ViewData["Title"] != null ? ViewData["Title"] + " | " : "") + "Essenz Store";
+}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@pageTitle</title>
+    <meta name="description" content="@pageDesc" />
+    <!-- Open Graph / SEO -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="@pageTitle" />
+    <meta property="og:description" content="@pageDesc" />
+    <meta property="og:image" content="@ogImage" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://essenzstore.com.br@(Context.Request.Path)" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <script>window.FRETE_GRATIS = @freteGratis.ToString(System.Globalization.CultureInfo.InvariantCulture);</script>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="@(ViewData["BodyClass"])">
+
+    <!-- Announcement Bar -->
+    <div class="announcement-bar" id="announcementBar">
+        <div class="announcement-bar__track" id="announcementTrack">
+            <span class="announcement-bar__item"><i class="fas fa-tag"></i> Use o cupom <strong>PRIMEIRACOMPRA</strong> e ganhe 5% OFF</span>
+            <span class="announcement-bar__item"><i class="fas fa-truck"></i> Frete grátis acima de R$@freteGratisStr para todo o Brasil</span>
+            <span class="announcement-bar__item"><i class="fab fa-whatsapp"></i> WhatsApp: <a href="https://wa.me/@waNum">@waDisplay</a></span>
+            <span class="announcement-bar__item"><i class="fas fa-credit-card"></i> Parcele em até 6x sem juros no cartão</span>
+            <span class="announcement-bar__item"><i class="fas fa-shield-alt"></i> Compra 100% segura e garantida</span>
+        </div>
+        <button class="announcement-bar__close" onclick="document.getElementById('announcementBar').style.display='none'"><i class="fas fa-times"></i></button>
+    </div>
+
+    <!-- Top Bar -->
+    <div class="topbar">
+        <div class="container">
+            <div class="topbar__left">
+                <a href="https://wa.me/5548988163125" target="_blank" class="topbar__wa"><i class="fab fa-whatsapp"></i> @waDisplay</a>
+                <span class="topbar__divider">|</span>
+                <a href="https://rastreamento.correios.com.br/app/index.php" target="_blank"><i class="fas fa-map-marker-alt"></i> Rastreie seu pedido</a>
+            </div>
+            <div class="topbar__right">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a href="/minha-conta"><i class="fas fa-user"></i> Minha conta</a>
+                    <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="topbar__link-btn">Sair</button>
+                    </form>
+                }
+                else
+                {
+                    <a href="/Account/Login">Entrar</a>
+                    <span>|</span>
+                    <a href="/Account/Register">Cadastrar</a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="container header__inner">
+            <a class="header__logo" href="/">
+                <span class="header__logo-text">ESSENZ</span>
+                <span class="header__logo-sub">STORE</span>
+            </a>
+
+            <nav class="header__nav" id="mainNav">
+                <ul class="nav__list">
+                    <li><a href="/" class="nav__link">Início</a></li>
+                    <li class="nav__item--has-mega">
+                        <a href="/Products/Index" class="nav__link">Produtos <i class="fas fa-chevron-down nav__chevron"></i></a>
+                        <div class="mega-menu">
+                            <div class="container mega-menu__inner">
+                                <div class="mega-menu__col">
+                                    <h4>Categorias</h4>
+                                    <ul>
+                                        <li><a href="/categoria/camisetas">Camisetas</a></li>
+                                        <li><a href="/categoria/calcas">Calças Jeans</a></li>
+                                        <li><a href="/categoria/bermudas">Bermudas</a></li>
+                                        <li><a href="/categoria/jaquetas">Jaquetas</a></li>
+                                        <li><a href="/categoria/bones">Bonés</a></li>
+                                        <li><a href="/categoria/tenis">Tênis / Sneakers</a></li>
+                                        <li><a href="/categoria/acessorios">Acessórios</a></li>
+                                    </ul>
+                                </div>
+                                <div class="mega-menu__col">
+                                    <h4>Destaques</h4>
+                                    <ul>
+                                        <li><a href="/Products/Index?SomenteLancamentos=true">🔥 Lançamentos</a></li>
+                                        <li><a href="/Products/Index?SomentePromo=true">🏷️ Promoções</a></li>
+                                        <li><a href="/Products/Index?Sort=mais-vendidos">⭐ Mais Vendidos</a></li>
+                                        <li><a href="/Products/Index">Ver tudo</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li><a href="/categoria/camisetas" class="nav__link">Camisetas</a></li>
+                    <li><a href="/categoria/calcas" class="nav__link">Calças</a></li>
+                    <li><a href="/categoria/tenis" class="nav__link">Sneakers</a></li>
+                    <li><a href="/Products/Index?SomentePromo=true" class="nav__link nav__link--promo">Promoções</a></li>
+                    <li><a href="https://rastreamento.correios.com.br/app/index.php" target="_blank" class="nav__link">Rastreie</a></li>
+                </ul>
+            </nav>
+
+            <div class="header__actions">
+                <button class="header__icon-btn" id="searchToggle" title="Buscar">
+                    <i class="fas fa-search"></i>
+                </button>
+                <a href="/Wishlist/Index" class="header__icon-btn" title="Favoritos">
+                    <i class="far fa-heart"></i>
+                </a>
+                <button class="header__icon-btn header__cart-btn" id="miniCartToggle" title="Carrinho">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span class="header__cart-count" id="cartCount">0</span>
+                </button>
+                <button class="header__hamburger" id="hamburger" aria-label="Menu">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Search bar -->
+        <div class="header__search" id="searchBar">
+            <div class="container">
+                <form action="/Search/Index" method="get" class="search-form">
+                    <input type="text" name="q" placeholder="Buscar produtos, marcas..." class="search-form__input" autofocus />
+                    <button type="submit" class="search-form__btn"><i class="fas fa-search"></i></button>
+                    <button type="button" class="search-form__close" id="searchClose"><i class="fas fa-times"></i></button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile menu overlay -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <!-- Mini Cart Sidebar -->
+    <div class="mini-cart-overlay" id="miniCartOverlay"></div>
+    <aside class="mini-cart" id="miniCart">
+        <div class="mini-cart__header">
+            <h3><i class="fas fa-shopping-bag"></i> Meu Carrinho <span class="mini-cart__count" id="miniCartCount">(0)</span></h3>
+            <button class="mini-cart__close" id="miniCartClose"><i class="fas fa-times"></i></button>
+        </div>
+
+        <!-- Frete Progress -->
+        <div class="mini-cart__frete" id="miniCartFreteBar">
+            <div class="frete-msg" id="freteMsg">Frete grátis a partir de R$299</div>
+            <div class="frete-progress">
+                <div class="frete-progress__fill" id="freteProgressFill" style="width:0%"></div>
+            </div>
+        </div>
+
+        <!-- Items -->
+        <div class="mini-cart__items" id="miniCartItems">
+            <div class="mini-cart__empty">
+                <i class="fas fa-shopping-bag"></i>
+                <p>Seu carrinho está vazio</p>
+                <a href="/Products/Index" class="btn btn--primary btn--sm">Ver produtos</a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mini-cart__footer" id="miniCartFooter" style="display:none">
+            <div class="mini-cart__subtotal">
+                <span>Subtotal</span>
+                <strong id="miniCartTotal">R$ 0,00</strong>
+            </div>
+            <div class="mini-cart__installment" id="miniCartInstallment"></div>
+            <a href="/Cart/Index" class="btn btn--primary btn--block btn--lg">Ver carrinho</a>
+            <a href="/Checkout/Index" class="btn btn--ghost btn--block" style="margin-top:0.5rem">Finalizar compra</a>
+            <div class="mini-cart__secure"><i class="fas fa-lock"></i> Compra 100% segura</div>
+        </div>
+    </aside>
+
+    <!-- Alerts -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert--success">
+            <i class="fas fa-check-circle"></i>
+            @TempData["Success"]
+            <button class="alert__close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert--error">
+            <i class="fas fa-exclamation-circle"></i>
+            @TempData["Error"]
+            <button class="alert__close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+        </div>
+    }
+
+    <main>
+        @RenderBody()
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer__grid">
+                <div class="footer__brand">
+                    <div class="footer__logo">ESSENZ<span>STORE</span></div>
+                    <p>Moda masculina premium com estilo, qualidade e sofisticação para o homem moderno. Envios para todo o Brasil.</p>
+                    <div class="footer__social">
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+                        <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                        <a href="https://wa.me/@waNum" aria-label="WhatsApp" target="_blank"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+                <div class="footer__col">
+                    <h4>Loja</h4>
+                    <ul>
+                        <li><a href="/categoria/camisetas">Camisetas</a></li>
+                        <li><a href="/categoria/calcas">Calças Jeans</a></li>
+                        <li><a href="/categoria/bermudas">Bermudas</a></li>
+                        <li><a href="/categoria/bones">Bonés</a></li>
+                        <li><a href="/categoria/tenis">Tênis / Sneakers</a></li>
+                        <li><a href="/Products/Index?SomenteLancamentos=true">Lançamentos</a></li>
+                        <li><a href="/Products/Index?SomentePromo=true">Promoções</a></li>
+                    </ul>
+                </div>
+                <div class="footer__col">
+                    <h4>Atendimento</h4>
+                    <ul>
+                        <li><a href="/paginas/sobre-nos">Quem somos</a></li>
+                        <li><a href="/paginas/politica-de-trocas">Trocas e devoluções</a></li>
+                        <li><a href="/paginas/politica-de-envios">Política de envios</a></li>
+                        <li><a href="/paginas/faq-perguntas-frequentes">FAQ</a></li>
+                        <li><a href="/paginas/politica-de-privacidade">Privacidade</a></li>
+                        <li><a href="https://rastreamento.correios.com.br/app/index.php" target="_blank">Rastreie seu pedido</a></li>
+                    </ul>
+                </div>
+                <div class="footer__col">
+                    <h4>Minha conta</h4>
+                    <ul>
+                        <li><a href="/minha-conta">Dashboard</a></li>
+                        <li><a href="/Orders/Index">Meus pedidos</a></li>
+                        <li><a href="/Wishlist/Index">Favoritos</a></li>
+                        <li><a href="/Account/Login">Entrar</a></li>
+                        <li><a href="/Account/Register">Cadastrar</a></li>
+                    </ul>
+                </div>
+                <div class="footer__col">
+                    <h4>Contato</h4>
+                    <ul class="footer__contact">
+                        <li><i class="fab fa-whatsapp"></i> <a href="https://wa.me/@waNum" target="_blank">@waDisplay</a></li>
+                        <li><i class="fas fa-envelope"></i> contato@essenzstore.com.br</li>
+                        <li><i class="fas fa-clock"></i> Seg-Sáb: 10h às 20h</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Payment Methods -->
+            <div class="footer__payments-section">
+                <span class="footer__payments-label">Formas de pagamento</span>
+                <div class="footer__payments">
+                    <div class="payment-icon"><i class="fab fa-cc-visa"></i></div>
+                    <div class="payment-icon"><i class="fab fa-cc-mastercard"></i></div>
+                    <div class="payment-icon"><i class="fab fa-cc-amex"></i></div>
+                    <div class="payment-icon payment-icon--pix"><i class="fab fa-pix"></i> PIX</div>
+                    <div class="payment-icon"><i class="fas fa-barcode"></i> Boleto</div>
+                </div>
+            </div>
+
+            <div class="footer__bottom">
+                <p>&copy; @DateTime.Now.Year Essenz Store. CNPJ: 00.000.000/0001-00. Todos os direitos reservados.</p>
+                <p class="footer__bottom-security"><i class="fas fa-lock"></i> Site seguro — SSL</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- WhatsApp Floating Button -->
+    <a href="https://wa.me/@(waNum)?text=Olá! Vim pelo site e gostaria de mais informações." target="_blank" class="whatsapp-float" title="Fale conosco no WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+        <span class="whatsapp-float__tooltip">Fale conosco!</span>
+    </a>
+
+    <!-- LGPD Cookie Banner -->
+    <div class="lgpd-banner" id="lgpdBanner" style="display:none">
+        <i class="fas fa-cookie-bite"></i>
+        <div class="lgpd-banner__content">
+            <p>Usamos cookies para melhorar sua experiência e personalizar conteúdo. Ao continuar navegando, você concorda com nossa <a href="/paginas/politica-de-privacidade">Política de Privacidade</a>.</p>
+            <div class="lgpd-banner__actions">
+                <button onclick="aceitarCookies()" class="btn btn--primary btn--sm">Aceitar todos</button>
+                <button onclick="recusarCookies()" class="btn btn--ghost btn--sm">Apenas essenciais</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

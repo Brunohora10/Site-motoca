@@ -1,0 +1,133 @@
+@model EssenzStore.Models.ViewModels.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section TopbarActions {
+    <a href="/admin/produtos/novo" class="btn-adm btn-adm--gold btn-adm--sm">
+        <i class="fas fa-plus"></i> Novo Produto
+    </a>
+}
+
+<!-- KPIs -->
+<div class="adm-kpis">
+    <div class="kpi">
+        <div class="kpi__icon kpi__icon--green"><i class="fas fa-dollar-sign"></i></div>
+        <div>
+            <div class="kpi__value">R$ @Model.FaturamentoHoje.ToString("N2")</div>
+            <div class="kpi__label">Faturamento hoje</div>
+        </div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__icon kpi__icon--blue"><i class="fas fa-chart-line"></i></div>
+        <div>
+            <div class="kpi__value">R$ @Model.FaturamentoMes.ToString("N2")</div>
+            <div class="kpi__label">Faturamento do mês</div>
+        </div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__icon kpi__icon--gold"><i class="fas fa-receipt"></i></div>
+        <div>
+            <div class="kpi__value">R$ @Model.TicketMedio.ToString("N2")</div>
+            <div class="kpi__label">Ticket médio</div>
+        </div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__icon kpi__icon--orange"><i class="fas fa-clock"></i></div>
+        <div>
+            <div class="kpi__value">@Model.PedidosPendentes</div>
+            <div class="kpi__label">Pedidos pendentes</div>
+        </div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__icon kpi__icon--blue"><i class="fas fa-check-circle"></i></div>
+        <div>
+            <div class="kpi__value">@Model.PedidosPagos</div>
+            <div class="kpi__label">Pedidos pagos</div>
+        </div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__icon kpi__icon--purple"><i class="fas fa-truck"></i></div>
+        <div>
+            <div class="kpi__value">@Model.PedidosEnviados</div>
+            <div class="kpi__label">Enviados</div>
+        </div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__icon kpi__icon--green"><i class="fas fa-users"></i></div>
+        <div>
+            <div class="kpi__value">@Model.TotalClientes</div>
+            <div class="kpi__label">Clientes</div>
+        </div>
+    </div>
+    <div class="kpi">
+        <div class="kpi__icon kpi__icon--gold"><i class="fas fa-box"></i></div>
+        <div>
+            <div class="kpi__value">@Model.TotalProdutos</div>
+            <div class="kpi__label">Produtos ativos</div>
+        </div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;align-items:start">
+    <!-- Últimos pedidos -->
+    <div class="adm-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <p class="adm-card__title" style="margin:0">Últimos Pedidos</p>
+            <a href="/admin/pedidos" class="btn-adm btn-adm--ghost btn-adm--sm">Ver todos</a>
+        </div>
+        <div class="adm-table-wrap">
+            <table class="adm-table">
+                <thead>
+                    <tr>
+                        <th>Pedido</th>
+                        <th>Cliente</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var o in Model.UltimosPedidos)
+                    {
+                        <tr>
+                            <td><strong>#@o.NumeroPedido</strong><br><small style="color:#666">@o.CreatedAt.ToString("dd/MM HH:mm")</small></td>
+                            <td>@o.NomeCliente</td>
+                            <td><strong>R$ @o.Total.ToString("N2")</strong></td>
+                            <td>
+                                <span class="badge badge--@o.Status.ToString().ToLower()">@o.Status</span>
+                            </td>
+                            <td><a href="/admin/pedidos/@o.Id" class="btn-adm btn-adm--ghost btn-adm--sm">Ver</a></td>
+                        </tr>
+                    }
+                    @if (!Model.UltimosPedidos.Any())
+                    {
+                        <tr><td colspan="5" style="text-align:center;color:#555;padding:2rem">Nenhum pedido ainda</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Estoque baixo -->
+    <div class="adm-card">
+        <p class="adm-card__title"><i class="fas fa-exclamation-triangle" style="color:#f59e0b"></i> Estoque Baixo</p>
+        @if (Model.EstoqueBaixo.Any())
+        {
+            <div style="display:flex;flex-direction:column;gap:0.75rem">
+                @foreach (var (nome, qtd) in Model.EstoqueBaixo)
+                {
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <span style="font-size:0.82rem;color:#ccc">@nome</span>
+                        <span class="badge badge--@(qtd == 0 ? "cancelled" : "low")">@qtd un.</span>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p style="font-size:0.82rem;color:#666">Estoque em dia ✓</p>
+        }
+    </div>
+</div>

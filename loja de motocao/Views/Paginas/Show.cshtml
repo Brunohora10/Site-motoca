@@ -1,0 +1,21 @@
+@model EssenzStore.Models.StorePage
+@{
+    ViewData["Title"] = Model.Titulo;
+}
+
+<div class="page-header">
+    <div class="container">
+        <nav class="breadcrumb">
+            <a href="/">Home</a>
+            <i class="fas fa-chevron-right"></i>
+            <span>@Model.Titulo</span>
+        </nav>
+        <h1 class="page-header__title">@Model.Titulo</h1>
+    </div>
+</div>
+
+<div class="container" style="padding:3rem 1rem;max-width:800px">
+    <div class="admin-card" style="line-height:1.9;color:var(--text2)">
+        @Html.Raw(Model.ConteudoHtml)
+    </div>
+</div>

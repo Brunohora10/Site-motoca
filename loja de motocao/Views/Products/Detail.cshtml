@@ -1,0 +1,304 @@
+@model EssenzStore.Models.ViewModels.ProductDetailViewModel
+@{
+    var product = Model.Product;
+    var preco = product.PrecoAtual;
+    var desconto = product.PercentualDesconto ?? 0;
+    ViewData["Title"] = product.Nome;
+    var images = product.Images?.OrderBy(i => i.Ordem).ToList() ?? new();
+    var variants = product.Variants?.ToList() ?? new();
+    var tamanhos = variants.Where(v => v.Ativo && v.Estoque > 0).Select(v => v.Tamanho).Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
+    var cores = variants.Where(v => v.Ativo && v.Estoque > 0).Select(v => v.Cor).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
+    var mainImgUrl = product.MainImage?.Url ?? (images.FirstOrDefault()?.Url ?? "/img/placeholder-product.jpg");
+}
+
+<div class="container" style="padding-top:2rem;padding-bottom:4rem">
+    <nav class="breadcrumb">
+        <a href="/">Home</a>
+        <i class="fas fa-chevron-right"></i>
+        @if (product.Category != null)
+        {
+            <a href="/categoria/@product.Category.Slug">@product.Category.Nome</a>
+            <i class="fas fa-chevron-right"></i>
+        }
+        <span>@product.Nome</span>
+    </nav>
+
+    <div class="product-detail">
+        <!-- Galeria -->
+        <div class="product-detail__gallery">
+            <div class="gallery__main" id="mainImage">
+                <img src="@mainImgUrl" alt="@product.Nome" id="mainImg" class="gallery__main-img" />
+                @if (desconto > 0)
+                {
+                    <span class="gallery__badge">-@desconto%</span>
+                }
+            </div>
+            @if (images.Count > 1)
+            {
+                <div class="gallery__thumbs">
+                    @foreach (var img in images)
+                    {
+                        <button class="gallery__thumb @(img.Url == mainImgUrl ? "active" : "")" onclick="changeImage(this, '@img.Url')">
+                            <img src="@img.Url" alt="@product.Nome" />
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Info -->
+        <div class="product-detail__info">
+            @if (product.Brand != null)
+            {
+                <a href="/marca/@product.Brand.Slug" class="product-detail__brand">@product.Brand.Nome</a>
+            }
+            <h1 class="product-detail__name">@product.Nome</h1>
+
+            @if (Model.Reviews.Any())
+            {
+                var avg = Model.Reviews.Average(r => r.Nota);
+                <div class="product-detail__rating">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        <i class="@(i <= avg ? "fas" : "far") fa-star"></i>
+                    }
+                    <span>(@Model.Reviews.Count avaliações)</span>
+                </div>
+            }
+
+            <div class="product-detail__price">
+                @if (product.PrecoPromocional.HasValue)
+                {
+                    <span class="price__old">R$ @product.Preco.ToString("N2")</span>
+                }
+                <span class="price__current price__current--lg">R$ @preco.ToString("N2")</span>
+                <span class="price__installment">ou 10x de R$ @((preco / 10).ToString("N2")) sem juros</span>
+                <span class="price__pix">ou R$ @((preco * 0.9m).ToString("N2")) via PIX (-10%)</span>
+            </div>
+
+            @if (!string.IsNullOrEmpty(product.DescricaoCurta))
+            {
+                <p class="product-detail__desc">@product.DescricaoCurta</p>
+            }
+
+            <form asp-controller="Cart" asp-action="Add" method="post" id="addCartForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ProductId" value="@product.Id" />
+                <input type="hidden" name="VariantId" id="selectedVariantId" value="@(variants.FirstOrDefault(v => v.Ativo && v.Estoque > 0)?.Id ?? 0)" />
+
+                @if (cores.Any())
+                {
+                    <div class="product-detail__option">
+                        <label class="option__label">Cor: <strong id="selectedCor">@cores.First()</strong></label>
+                        <div class="option__colors">
+                            @foreach (var cor in cores)
+                            {
+                                <button type="button" class="color-btn @(cor == cores.First() ? "active" : "")"
+                                        data-cor="@cor" title="@cor">
+                                    @cor
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+
+                @if (tamanhos.Any())
+                {
+                    <div class="product-detail__option">
+                        <label class="option__label">Tamanho: <strong id="selectedTamanho">-</strong></label>
+                        <div class="option__sizes">
+                            @foreach (var tam in tamanhos)
+                            {
+                                <button type="button" class="size-btn-lg @(tam == tamanhos.First() ? "active" : "")"
+                                        data-tamanho="@tam">@tam</button>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <div class="product-detail__qty">
+                    <label class="option__label">Quantidade:</label>
+                    <div class="qty-control">
+                        <button type="button" class="qty-btn" onclick="changeQty(-1)">-</button>
+                        <input type="number" name="Quantidade" id="qtyInput" value="1" min="1" max="10" class="qty-input" />
+                        <button type="button" class="qty-btn" onclick="changeQty(1)">+</button>
+                    </div>
+                </div>
+
+                <div class="product-detail__actions">
+                    <button type="submit" class="btn btn--primary btn--lg btn--block">
+                        <i class="fas fa-shopping-bag"></i> Adicionar ao Carrinho
+                    </button>
+                    <button type="button" class="btn btn--ghost btn--lg wishlist-toggle"
+                            data-product-id="@product.Id"
+                            data-in-wishlist="@(Model.IsInWishlist ? "true" : "false")">
+                        <i class="@(Model.IsInWishlist ? "fas" : "far") fa-heart"></i>
+                        @(Model.IsInWishlist ? "Favoritado" : "Favoritar")
+                    </button>
+                </div>
+            </form>
+
+            <div class="product-detail__features">
+                <div class="feature-item"><i class="fas fa-shield-alt"></i> Compra garantida</div>
+                <div class="feature-item"><i class="fas fa-undo"></i> Troca em 30 dias</div>
+                <div class="feature-item"><i class="fab fa-pix"></i> PIX com 10% de desconto</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="product-tabs" style="margin-top:3rem">
+        <div class="tabs__nav">
+            <button class="tab-btn active" onclick="switchTab(this, 'desc')">Descrição</button>
+            <button class="tab-btn" onclick="switchTab(this, 'reviews')">Avaliações (@Model.Reviews.Count)</button>
+        </div>
+        <div class="tab-content active" id="tab-desc">
+            <div class="product-description">
+                @Html.Raw(product.DescricaoCompleta ?? "<p>Sem descrição disponível.</p>")
+            </div>
+        </div>
+        <div class="tab-content" id="tab-reviews">
+            @if (Model.Reviews.Any())
+            {
+                foreach (var review in Model.Reviews)
+                {
+                    <div class="review-item">
+                        <div class="review-item__header">
+                            <strong>@(review.User?.Nome ?? "Cliente")</strong>
+                            <div class="stars">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <i class="@(i <= review.Nota ? "fas" : "far") fa-star"></i>
+                                }
+                            </div>
+                            <span class="review-item__date">@review.CreatedAt.ToString("dd/MM/yyyy")</span>
+                        </div>
+                        @if (!string.IsNullOrEmpty(review.Titulo))
+                        {
+                            <p><strong>@review.Titulo</strong></p>
+                        }
+                        @if (!string.IsNullOrEmpty(review.Comentario))
+                        {
+                            <p>@review.Comentario</p>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <p style="color:#aaa">Ainda não há avaliações para este produto. Seja o primeiro!</p>
+            }
+
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="review-form" style="margin-top:2rem;padding-top:2rem;border-top:1px solid #2a2a2d">
+                    <h4 style="color:#fff;margin-bottom:1.25rem">Deixar Avaliação</h4>
+                    <form asp-controller="Products" asp-action="AddReview" asp-route-slug="@product.Slug" method="post">
+                        @Html.AntiForgeryToken()
+                        <div style="margin-bottom:1rem">
+                            <label style="font-size:.8rem;color:#aaa;display:block;margin-bottom:.5rem">Nota</label>
+                            <div class="star-rating" id="starRating">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <button type="button" class="star-btn" data-val="@i" onclick="setRating(@i)">
+                                        <i class="far fa-star" id="star@i"></i>
+                                    </button>
+                                }
+                            </div>
+                            <input type="hidden" name="nota" id="notaInput" value="5" />
+                        </div>
+                        <div style="margin-bottom:.75rem">
+                            <input type="text" name="titulo" placeholder="Título (opcional)" maxlength="200"
+                                   style="width:100%;background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.6rem .9rem;font-size:.875rem;box-sizing:border-box" />
+                        </div>
+                        <div style="margin-bottom:1rem">
+                            <textarea name="comentario" placeholder="Conte sua experiência com o produto..." maxlength="1000" rows="4"
+                                      style="width:100%;background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.6rem .9rem;font-size:.875rem;resize:vertical;box-sizing:border-box"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn--primary">
+                            <i class="fas fa-star"></i> Enviar Avaliação
+                        </button>
+                    </form>
+                </div>
+            }
+            else
+            {
+                <div style="margin-top:1.5rem;padding:1rem;background:#161618;border:1px solid #2a2a2d;border-radius:8px;text-align:center">
+                    <p style="color:#aaa;margin:0"><a href="/Account/Login" style="color:#d4af37">Faça login</a> para deixar uma avaliação.</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (Model.Related.Any())
+    {
+        <div style="margin-top:4rem">
+            <h2 class="section__title">Você também pode gostar</h2>
+            <div class="products-grid products-grid--sm">
+                @foreach (var p in Model.Related)
+                {
+                    @await Html.PartialAsync("_ProductCard", p)
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+    const variants = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        (product.Variants?.ToList() ?? new System.Collections.Generic.List<EssenzStore.Models.ProductVariant>())
+            .Select(v => new { id = v.Id, tamanho = v.Tamanho, cor = v.Cor, estoque = v.Estoque })
+    ));
+
+    function changeImage(btn, url) {
+        document.getElementById('mainImg').src = url;
+        document.querySelectorAll('.gallery__thumb').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+    }
+    function changeQty(delta) {
+        const inp = document.getElementById('qtyInput');
+        let val = parseInt(inp.value) + delta;
+        if (val < 1) val = 1; if (val > 10) val = 10;
+        inp.value = val;
+    }
+    function switchTab(btn, id) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + id).classList.add('active');
+    }
+    document.querySelectorAll('.size-btn-lg').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.size-btn-lg').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('selectedTamanho').textContent = btn.dataset.tamanho;
+            updateVariant();
+        });
+    });
+    document.querySelectorAll('.color-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('selectedCor').textContent = btn.dataset.cor;
+            updateVariant();
+        });
+    });
+    function updateVariant() {
+        const tam = document.querySelector('.size-btn-lg.active')?.dataset?.tamanho;
+        const cor = document.querySelector('.color-btn.active')?.dataset?.cor;
+        const v = variants.find(v => (!tam || v.tamanho === tam) && (!cor || v.cor === cor));
+        if (v) document.getElementById('selectedVariantId').value = v.id;
+    }
+
+    // Star rating
+    function setRating(val) {
+        document.getElementById('notaInput').value = val;
+        for (let i = 1; i <= 5; i++) {
+            const icon = document.getElementById('star' + i);
+            if (icon) { icon.className = i <= val ? 'fas fa-star' : 'far fa-star'; icon.style.color = i <= val ? '#d4af37' : ''; }
+        }
+    }
+    setRating(5);
+</script>
+}

@@ -1,0 +1,115 @@
+@model List<EssenzStore.Models.Category>
+@{
+    ViewData["Title"] = "Categorias";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    EssenzStore.Models.Category? editando = null;
+    if (TempData["EditId"] != null) {
+        editando = Model.FirstOrDefault(c => c.Id == (int)TempData["EditId"]!);
+    }
+}
+
+@section TopbarActions {
+    <button class="btn-adm btn-adm--gold btn-adm--sm" onclick="abrirModal('modalCat')">
+        <i class="fas fa-plus"></i> Nova Categoria
+    </button>
+}
+
+<div class="adm-card">
+    <div class="adm-table-wrap">
+        <table class="adm-table">
+            <thead>
+                <tr><th>Nome</th><th>Slug</th><th>Pai</th><th>Ordem</th><th>Ativo</th><th style="text-align:right">Ações</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model)
+                {
+                    <tr>
+                        <td><strong>@c.Nome</strong></td>
+                        <td style="color:#666">@c.Slug</td>
+                        <td style="color:#888">@(c.Parent?.Nome ?? "—")</td>
+                        <td>@c.Ordem</td>
+                        <td><span class="badge badge--@(c.Ativo ? "active" : "inactive")">@(c.Ativo ? "Sim" : "Não")</span></td>
+                        <td style="text-align:right">
+                            <button class="btn-adm btn-adm--ghost btn-adm--sm"
+                                    onclick="editarCategoria({id:@c.Id,nome:'@c.Nome.Replace("'","&#39;")',slug:'@c.Slug',parentId:@(c.ParentId.HasValue ? c.ParentId.Value.ToString() : "0"),ordem:@c.Ordem,ativo:@(c.Ativo ? "true" : "false")})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any()) {
+                    <tr><td colspan="6" style="text-align:center;color:#555;padding:2rem">Nenhuma categoria cadastrada.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="adm-modal-bg" id="modalCat">
+    <div class="adm-modal">
+        <p class="adm-modal__title" id="modalCatTitulo">Nova Categoria</p>
+        <form asp-action="SalvarCategoria" asp-controller="Admin" method="post" id="frmCat">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" id="catId" value="0" />
+            <div class="adm-form-grid">
+                <div class="form-group">
+                    <label>Nome *</label>
+                    <input type="text" name="Nome" id="catNome" required />
+                </div>
+                <div class="form-group">
+                    <label>Slug</label>
+                    <input type="text" name="Slug" id="catSlug" placeholder="gerado-automatico" />
+                </div>
+                <div class="form-group">
+                    <label>Categoria Pai</label>
+                    <select name="ParentId" id="catParentId">
+                        <option value="">Nenhuma (raiz)</option>
+                        @foreach (var c in Model)
+                        {
+                            <option value="@c.Id">@c.Nome</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Ordem</label>
+                    <input type="number" name="Ordem" id="catOrdem" value="0" />
+                </div>
+                <div class="form-group adm-form-grid--full">
+                    <div class="form-check">
+                        <input type="checkbox" name="Ativo" id="catAtivo" value="true" checked />
+                        <label for="catAtivo">Ativo</label>
+                    </div>
+                </div>
+            </div>
+            <div class="adm-modal__footer">
+                <button type="button" class="btn-adm btn-adm--ghost" onclick="fecharModal('modalCat')">Cancelar</button>
+                <button type="submit" class="btn-adm btn-adm--gold"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function abrirModal(id) { document.getElementById(id).classList.add('open'); }
+function fecharModal(id) { document.getElementById(id).classList.remove('open'); }
+function editarCategoria(c) {
+    document.getElementById('modalCatTitulo').textContent = 'Editar Categoria';
+    document.getElementById('catId').value = c.id;
+    document.getElementById('catNome').value = c.nome;
+    document.getElementById('catSlug').value = c.slug;
+    document.getElementById('catOrdem').value = c.ordem;
+    document.getElementById('catAtivo').checked = c.ativo;
+    const sel = document.getElementById('catParentId');
+    for (let o of sel.options) o.selected = (o.value == c.parentId);
+    abrirModal('modalCat');
+}
+// Auto slug
+document.getElementById('catNome')?.addEventListener('input', function() {
+    const slug = document.getElementById('catSlug');
+    if (!slug.dataset.manual) slug.value = this.value.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+});
+document.getElementById('catSlug')?.addEventListener('input', function() { this.dataset.manual = '1'; });
+</script>
+}

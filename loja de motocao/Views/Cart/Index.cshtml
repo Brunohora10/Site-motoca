@@ -1,0 +1,155 @@
+@model EssenzStore.Models.ViewModels.CartViewModel
+@{
+    ViewData["Title"] = "Carrinho";
+}
+
+<div class="page-header">
+    <div class="container">
+        <nav class="breadcrumb">
+            <a href="/">Home</a>
+            <i class="fas fa-chevron-right"></i>
+            <span>Carrinho</span>
+        </nav>
+        <h1 class="page-header__title">Meu Carrinho</h1>
+    </div>
+</div>
+
+<div class="container" style="padding-bottom:4rem">
+    @if (Model.Items.Any())
+    {
+        <div class="cart-layout">
+            <!-- Itens -->
+            <div class="cart-items">
+                @foreach (var item in Model.Items)
+                {
+                    <div class="cart-item" id="cart-item-@item.CartItemId">
+                        <a href="/produto/@item.Slug" class="cart-item__img-link">
+                            <img src="@(item.ImageUrl ?? "/img/placeholder-product.jpg")" alt="@item.NomeProduto" class="cart-item__img" />
+                        </a>
+                        <div class="cart-item__info">
+                            <a href="/produto/@item.Slug" class="cart-item__name">@item.NomeProduto</a>
+                            @if (!string.IsNullOrEmpty(item.Tamanho) || !string.IsNullOrEmpty(item.Cor))
+                            {
+                                <div class="cart-item__variants">
+                                    @if (!string.IsNullOrEmpty(item.Tamanho)) { <span>Tamanho: @item.Tamanho</span> }
+                                    @if (!string.IsNullOrEmpty(item.Cor)) { <span>Cor: @item.Cor</span> }
+                                </div>
+                            }
+                            <div class="cart-item__price">R$ @item.PrecoUnitario.ToString("N2")</div>
+                        </div>
+                        <div class="cart-item__controls">
+                            <div class="qty-control">
+                                <form asp-controller="Cart" asp-action="Update" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="cartItemId" value="@item.CartItemId" />
+                                    <button type="submit" name="quantidade" value="@(item.Quantidade - 1)" class="qty-btn" @(item.Quantidade <= 1 ? "disabled" : "")>-</button>
+                                </form>
+                                <span class="qty-display">@item.Quantidade</span>
+                                <form asp-controller="Cart" asp-action="Update" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="cartItemId" value="@item.CartItemId" />
+                                    <button type="submit" name="quantidade" value="@(item.Quantidade + 1)" class="qty-btn" @(item.Quantidade >= item.EstoqueDisponivel ? "disabled" : "")>+</button>
+                                </form>
+                            </div>
+                            <div class="cart-item__subtotal">R$ @item.Subtotal.ToString("N2")</div>
+                            <form asp-controller="Cart" asp-action="Remove" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="cartItemId" value="@item.CartItemId" />
+                                <button type="submit" class="cart-item__remove" title="Remover">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Resumo -->
+            <div class="cart-summary">
+                <h3 class="cart-summary__title">Resumo do Pedido</h3>
+
+                <!-- Cupom -->
+                <div class="cart-summary__coupon">
+                    <form asp-controller="Cart" asp-action="ApplyCoupon" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="coupon-form">
+                            <input type="text" name="Codigo" placeholder="Código do cupom"
+                                   value="@Model.CupomCodigo" class="coupon-form__input" />
+                            <button type="submit" class="btn btn--sm">Aplicar</button>
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.CupomMensagem))
+                        {
+                            <p class="coupon-msg @(Model.Desconto > 0 ? "coupon-msg--ok" : "coupon-msg--err")">
+                                @Model.CupomMensagem
+                            </p>
+                        }
+                    </form>
+                    @if (Model.Desconto > 0)
+                    {
+                        <form asp-controller="Cart" asp-action="RemoveCoupon" method="post" style="margin-top:0.5rem">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn--ghost btn--sm">Remover cupom</button>
+                        </form>
+                    }
+                </div>
+
+                <!-- Frete -->
+                @if (Model.ValorParaFreteGratis > 0 && !Model.FreteGratisAtingido)
+                {
+                    <div class="cart-summary__frete-bar">
+                        <p>Falta <strong>R$ @Model.ValorParaFreteGratis.ToString("N2")</strong> para frete grátis</p>
+                        <div class="frete-progress">
+                            <div class="frete-progress__fill" style="width: @(Math.Min(100, (int)((Model.Subtotal / (Model.Subtotal + Model.ValorParaFreteGratis)) * 100)))%"></div>
+                        </div>
+                    </div>
+                }
+                @if (Model.FreteGratisAtingido)
+                {
+                    <div class="cart-summary__frete-ok"><i class="fas fa-check-circle"></i> Frete grátis aplicado!</div>
+                }
+
+                <div class="cart-summary__values">
+                    <div class="summary-row">
+                        <span>Subtotal</span>
+                        <span>R$ @Model.Subtotal.ToString("N2")</span>
+                    </div>
+                    @if (Model.Desconto > 0)
+                    {
+                        <div class="summary-row summary-row--discount">
+                            <span>Desconto</span>
+                            <span>- R$ @Model.Desconto.ToString("N2")</span>
+                        </div>
+                    }
+                    <div class="summary-row">
+                        <span>Frete</span>
+                        <span>@(Model.FreteGratisAtingido || Model.Frete == 0 ? "Grátis" : "R$ " + Model.Frete.ToString("N2"))</span>
+                    </div>
+                    <div class="summary-row summary-row--total">
+                        <span>Total</span>
+                        <span>R$ @Model.Total.ToString("N2")</span>
+                    </div>
+                </div>
+
+                <a href="/Checkout/Index" class="btn btn--primary btn--lg btn--block">
+                    <i class="fas fa-lock"></i> Finalizar Pedido
+                </a>
+                <a href="/Products/Index" class="btn btn--ghost btn--block" style="margin-top:0.75rem">
+                    Continuar Comprando
+                </a>
+
+                <div class="cart-summary__secure">
+                    <i class="fas fa-lock"></i> Compra 100% segura e protegida
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state" style="margin-top:4rem">
+            <i class="fas fa-shopping-bag empty-state__icon"></i>
+            <h3>Seu carrinho está vazio</h3>
+            <p>Adicione produtos e aproveite nossas ofertas!</p>
+            <a href="/Products/Index" class="btn btn--primary btn--lg">Explorar produtos</a>
+        </div>
+    }
+</div>

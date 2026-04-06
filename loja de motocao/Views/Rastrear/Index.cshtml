@@ -1,0 +1,81 @@
+@model EssenzStore.Models.ViewModels.TrackingViewModel
+@{
+    ViewData["Title"] = "Rastrear Pedido";
+}
+
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-header__title"><i class="fas fa-truck"></i> Rastrear Pedido</h1>
+        <p style="color:var(--text3);margin-top:.5rem">Acompanhe a entrega do seu pedido</p>
+    </div>
+</div>
+
+<div class="container" style="padding:3rem 1rem;max-width:640px">
+    <div class="admin-card">
+        <form method="post" action="/rastrear" style="display:flex;gap:.75rem">
+            @Html.AntiForgeryToken()
+            <input type="text" name="CodigoRastreio" value="@Model.CodigoRastreio"
+                   placeholder="Código de rastreio ou nº do pedido"
+                   style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:#fff;padding:.75rem 1rem;font-size:.9rem" />
+            <button type="submit" class="btn btn--primary">
+                <i class="fas fa-search"></i> Rastrear
+            </button>
+        </form>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div style="margin-top:1rem;padding:.75rem 1rem;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;color:#ef4444;font-size:.875rem">
+                @Html.ValidationSummary(false)
+            </div>
+        }
+    </div>
+
+    @if (Model.Shipment != null)
+    {
+        <div class="admin-card" style="margin-top:1.5rem">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem">
+                <div>
+                    <p style="font-size:.75rem;color:var(--text3);margin:0 0 .25rem">Pedido</p>
+                    <p style="font-size:1.1rem;font-weight:700;margin:0">#@Model.Order?.NumeroPedido</p>
+                </div>
+                <div>
+                    <p style="font-size:.75rem;color:var(--text3);margin:0 0 .25rem">Código de rastreio</p>
+                    <p style="font-size:1rem;font-weight:600;margin:0;color:var(--gold)">@Model.Shipment.CodigoRastreio</p>
+                </div>
+                <div>
+                    <p style="font-size:.75rem;color:var(--text3);margin:0 0 .25rem">Status</p>
+                    <span class="status-badge status-badge--@Model.Shipment.Status.ToString().ToLower()">@Model.Shipment.Status</span>
+                </div>
+            </div>
+
+            @if (Model.Events.Any())
+            {
+                <div style="border-top:1px solid var(--border);padding-top:1.5rem">
+                    <h3 style="font-size:.9rem;font-weight:600;margin:0 0 1.25rem">Eventos de rastreamento</h3>
+                    @foreach (var ev in Model.Events)
+                    {
+                        <div style="display:flex;gap:1.25rem;margin-bottom:1.25rem">
+                            <div style="display:flex;flex-direction:column;align-items:center">
+                                <div style="width:10px;height:10px;border-radius:50%;background:var(--gold,#c9a84c);flex-shrink:0;margin-top:.35rem"></div>
+                                <div style="flex:1;width:1px;background:var(--border);margin-top:.5rem"></div>
+                            </div>
+                            <div style="padding-bottom:1rem">
+                                <div style="font-size:.9rem;font-weight:500;color:#fff">@ev.Descricao</div>
+                                <div style="font-size:.78rem;color:var(--text3);margin-top:.2rem">
+                                    @ev.EventDate.ToString("dd/MM/yyyy HH:mm")
+                                    @if (!string.IsNullOrEmpty(ev.Local)) { <span> — @ev.Local</span> }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p style="color:var(--text3);font-size:.875rem;text-align:center;padding:1rem">
+                    Ainda sem eventos de rastreamento. Tente novamente em breve.
+                </p>
+            }
+        </div>
+    }
+</div>

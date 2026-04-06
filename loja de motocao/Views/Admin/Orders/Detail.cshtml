@@ -1,0 +1,190 @@
+@model EssenzStore.Models.Order
+@{
+    ViewData["Title"] = $"Pedido #{Model.NumeroPedido}";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var payment = Model.Payments.FirstOrDefault();
+    var shipment = Model.Shipments.FirstOrDefault();
+    var statuses = new[] { "Pending","Paid","Separating","Packed","Shipped","Delivered","Returned","Refunded","Cancelled" };
+    var address = System.Text.Json.JsonDocument.Parse(Model.EnderecoEntregaJson).RootElement;
+}
+
+@section TopbarActions {
+    <a href="/admin/pedidos" class="btn-adm btn-adm--ghost btn-adm--sm"><i class="fas fa-arrow-left"></i> Voltar</a>
+}
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;align-items:start">
+
+    <!-- Coluna principal -->
+    <div>
+        <!-- Itens -->
+        <div class="adm-card">
+            <p class="adm-card__title">Itens do Pedido</p>
+            <div class="adm-table-wrap">
+                <table class="adm-table">
+                    <thead><tr><th>Produto</th><th>Variante</th><th>Qtd</th><th>Unitário</th><th style="text-align:right">Subtotal</th></tr></thead>
+                    <tbody>
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td><strong>@item.NomeProdutoSnapshot</strong><br><small style="color:#555">@item.MarcaSnapshot</small></td>
+                                <td style="color:#888">
+                                    @if (!string.IsNullOrEmpty(item.CorSnapshot)) { <span>@item.CorSnapshot</span> }
+                                    @if (!string.IsNullOrEmpty(item.TamanhoSnapshot)) { <span> / @item.TamanhoSnapshot</span> }
+                                    @if (!string.IsNullOrEmpty(item.SkuSnapshot)) { <br><small style="color:#555">@item.SkuSnapshot</small> }
+                                </td>
+                                <td>@item.Quantidade</td>
+                                <td>R$ @item.PrecoUnitarioSnapshot.ToString("N2")</td>
+                                <td style="text-align:right"><strong>R$ @item.Subtotal.ToString("N2")</strong></td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr><td colspan="4" style="text-align:right;color:#888;padding:.75rem 1rem">Subtotal</td><td style="text-align:right;padding:.75rem 1rem">R$ @Model.Subtotal.ToString("N2")</td></tr>
+                        @if (Model.Desconto > 0)
+                        {
+                            <tr><td colspan="4" style="text-align:right;color:#10b981;padding:.25rem 1rem">Desconto (@Model.CupomCodigo)</td><td style="text-align:right;color:#10b981;padding:.25rem 1rem">-R$ @Model.Desconto.ToString("N2")</td></tr>
+                        }
+                        <tr><td colspan="4" style="text-align:right;color:#888;padding:.25rem 1rem">Frete</td><td style="text-align:right;padding:.25rem 1rem">R$ @Model.Frete.ToString("N2")</td></tr>
+                        <tr><td colspan="4" style="text-align:right;font-weight:700;color:#fff;padding:.75rem 1rem;border-top:1px solid #333">Total</td><td style="text-align:right;font-weight:700;color:#fff;border-top:1px solid #333;padding:.75rem 1rem">R$ @Model.Total.ToString("N2")</td></tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Rastreamento -->
+        <div class="adm-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+                <p class="adm-card__title" style="margin:0">Envio & Rastreamento</p>
+                <button class="btn-adm btn-adm--gold btn-adm--sm" onclick="abrirModal('modalEnvio')"><i class="fas fa-truck"></i> Atualizar Envio</button>
+            </div>
+            @if (shipment != null)
+            {
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;font-size:.875rem;margin-bottom:1rem">
+                    <div><span style="color:#666">Transportadora:</span> <strong>@(shipment.Transportadora ?? "—")</strong></div>
+                    <div><span style="color:#666">Serviço:</span> <strong>@(shipment.Servico ?? "—")</strong></div>
+                    <div><span style="color:#666">Código de rastreio:</span> <strong>@(shipment.CodigoRastreio ?? "—")</strong></div>
+                    <div><span style="color:#666">Prazo:</span> <strong>@(shipment.PrazoDias > 0 ? shipment.PrazoDias + " dias" : "—")</strong></div>
+                    <div><span style="color:#666">Postado em:</span> <strong>@(shipment.PostedAt.HasValue ? shipment.PostedAt.Value.ToString("dd/MM/yyyy") : "—")</strong></div>
+                    <div><span style="color:#666">Status:</span> <span class="badge badge--@shipment.Status.ToString().ToLower()">@shipment.Status</span></div>
+                </div>
+                @if (shipment.TrackingEvents.Any())
+                {
+                    <div style="border-top:1px solid #222;padding-top:1rem">
+                        @foreach (var ev in shipment.TrackingEvents.OrderByDescending(e => e.EventDate))
+                        {
+                            <div style="display:flex;gap:1rem;margin-bottom:.75rem">
+                                <div style="font-size:.75rem;color:#666;white-space:nowrap">@ev.EventDate.ToString("dd/MM HH:mm")</div>
+                                <div style="font-size:.875rem;color:#ccc">@ev.Descricao <small style="color:#555">@ev.Local</small></div>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <p style="color:#555;font-size:.875rem">Nenhuma informação de envio registrada.</p>
+            }
+        </div>
+    </div>
+
+    <!-- Coluna lateral -->
+    <div>
+        <!-- Status -->
+        <div class="adm-card">
+            <p class="adm-card__title">Status do Pedido</p>
+            <div style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap">
+                <span class="badge badge--@Model.Status.ToString().ToLower()" style="font-size:.85rem;padding:.3rem .8rem">@Model.Status</span>
+                <span class="badge badge--@Model.PaymentStatus.ToString().ToLower()" style="font-size:.85rem;padding:.3rem .8rem">@Model.PaymentStatus</span>
+            </div>
+            <form asp-action="AtualizarStatus" asp-controller="Admin" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <div class="form-group" style="margin-bottom:.75rem">
+                    <label>Novo status</label>
+                    <select name="status">
+                        @foreach (var s in statuses)
+                        {
+                            <option value="@s" selected="@(Model.Status.ToString() == s)">@s</option>
+                        }
+                    </select>
+                </div>
+                <button type="submit" class="btn-adm btn-adm--gold" style="width:100%;justify-content:center">Atualizar Status</button>
+            </form>
+        </div>
+
+        <!-- Cliente -->
+        <div class="adm-card">
+            <p class="adm-card__title">Cliente</p>
+            <div style="font-size:.875rem;display:flex;flex-direction:column;gap:.5rem">
+                <div><strong>@Model.NomeCliente</strong></div>
+                <div style="color:#888">@Model.EmailCliente</div>
+                <div style="color:#888">@Model.TelefoneCliente</div>
+                @if (!string.IsNullOrEmpty(Model.CpfCliente)) { <div style="color:#666">CPF: @Model.CpfCliente</div> }
+            </div>
+        </div>
+
+        <!-- Endereço -->
+        <div class="adm-card">
+            <p class="adm-card__title">Endereço de Entrega</p>
+            <div style="font-size:.82rem;color:#888;line-height:1.7">
+                @{
+                    string GetStr(string key) {
+                        try { return address.GetProperty(key).GetString() ?? ""; }
+                        catch { return ""; }
+                    }
+                }
+                @GetStr("Rua"), @GetStr("Numero") @GetStr("Complemento")<br>
+                @GetStr("Bairro") — @GetStr("Cidade")/@GetStr("Estado")<br>
+                CEP: @GetStr("Cep")<br>
+                @if (!string.IsNullOrEmpty(GetStr("Referencia"))) { <span>Ref: @GetStr("Referencia")</span> }
+            </div>
+        </div>
+
+        <!-- Pagamento -->
+        <div class="adm-card">
+            <p class="adm-card__title">Pagamento</p>
+            @if (payment != null)
+            {
+                <div style="font-size:.875rem;display:flex;flex-direction:column;gap:.5rem">
+                    <div><span style="color:#666">Método:</span> <strong>@payment.Metodo</strong></div>
+                    <div><span style="color:#666">Status:</span> <span class="badge badge--@payment.Status.ToString().ToLower()">@payment.Status</span></div>
+                    <div><span style="color:#666">Valor:</span> <strong>R$ @payment.Valor.ToString("N2")</strong></div>
+                    @if (!string.IsNullOrEmpty(payment.TransactionId)) { <div style="color:#555;font-size:.75rem">ID: @payment.TransactionId</div> }
+                    @if (payment.PaidAt.HasValue) { <div style="color:#888">Pago em: @payment.PaidAt.Value.ToString("dd/MM/yyyy HH:mm")</div> }
+                </div>
+            }
+            else { <p style="color:#555;font-size:.875rem">Sem dados de pagamento.</p> }
+        </div>
+    </div>
+</div>
+
+<!-- Modal Envio -->
+<div class="adm-modal-bg" id="modalEnvio">
+    <div class="adm-modal">
+        <p class="adm-modal__title">Atualizar Envio</p>
+        <form asp-action="AtualizarEnvio" asp-controller="Admin" asp-route-id="@Model.Id" method="post">
+            @Html.AntiForgeryToken()
+            <div class="adm-form-grid">
+                <div class="form-group"><label>Transportadora</label><input type="text" name="transportadora" value="@shipment?.Transportadora" /></div>
+                <div class="form-group"><label>Serviço</label><input type="text" name="servico" value="@shipment?.Servico" /></div>
+                <div class="form-group adm-form-grid--full"><label>Código de Rastreio</label><input type="text" name="codigoRastreio" value="@shipment?.CodigoRastreio" /></div>
+                <div class="form-group"><label>URL de Rastreio</label><input type="text" name="urlRastreio" value="@shipment?.UrlRastreio" /></div>
+                <div class="form-group"><label>Prazo (dias)</label><input type="number" name="prazoDias" value="@shipment?.PrazoDias" /></div>
+                <div class="form-group adm-form-grid--full">
+                    <label>Evento de rastreamento</label>
+                    <input type="text" name="eventoDescricao" placeholder="Ex: Objeto postado nos Correios" />
+                </div>
+            </div>
+            <div class="adm-modal__footer">
+                <button type="button" class="btn-adm btn-adm--ghost" onclick="fecharModal('modalEnvio')">Cancelar</button>
+                <button type="submit" class="btn-adm btn-adm--gold"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function abrirModal(id) { document.getElementById(id).classList.add('open'); }
+function fecharModal(id) { document.getElementById(id).classList.remove('open'); }
+</script>
+}

@@ -1,0 +1,256 @@
+@model EssenzStore.Models.ViewModels.ProfileViewModel
+@{
+    ViewData["Title"] = "Meu Perfil";
+    var activeTab = ViewContext.HttpContext.Request.Query["tab"].ToString();
+    if (string.IsNullOrEmpty(activeTab)) activeTab = "dados";
+}
+
+<div class="page-header">
+    <div class="container">
+        <nav class="breadcrumb">
+            <a href="/">Home</a><i class="fas fa-chevron-right"></i>
+            <a href="/minha-conta">Minha Conta</a><i class="fas fa-chevron-right"></i>
+            <span>Meu Perfil</span>
+        </nav>
+        <h1 class="page-header__title">Meu Perfil</h1>
+    </div>
+</div>
+
+<div class="container" style="padding-bottom:4rem;max-width:760px">
+    <!-- Abas -->
+    <div style="display:flex;gap:.5rem;margin-top:2rem;border-bottom:1px solid #2a2a2d;padding-bottom:0">
+        <a href="?tab=dados" class="tab-link @(activeTab=="dados" ? "active" : "")"
+           style="padding:.6rem 1.25rem;font-size:.875rem;border-radius:8px 8px 0 0;text-decoration:none;color:@(activeTab=="dados" ? "#d4af37" : "#aaa");border-bottom:2px solid @(activeTab=="dados" ? "#d4af37" : "transparent")">
+            <i class="fas fa-user"></i> Dados Pessoais
+        </a>
+        <a href="?tab=enderecos" class="tab-link @(activeTab=="enderecos" ? "active" : "")"
+           style="padding:.6rem 1.25rem;font-size:.875rem;border-radius:8px 8px 0 0;text-decoration:none;color:@(activeTab=="enderecos" ? "#d4af37" : "#aaa");border-bottom:2px solid @(activeTab=="enderecos" ? "#d4af37" : "transparent")">
+            <i class="fas fa-map-marker-alt"></i> Meus Endereços <span style="background:#333;border-radius:99px;padding:0 7px;font-size:.75rem">@Model.Addresses.Count</span>
+        </a>
+        <a href="?tab=senha" class="tab-link @(activeTab=="senha" ? "active" : "")"
+           style="padding:.6rem 1.25rem;font-size:.875rem;border-radius:8px 8px 0 0;text-decoration:none;color:@(activeTab=="senha" ? "#d4af37" : "#aaa");border-bottom:2px solid @(activeTab=="senha" ? "#d4af37" : "transparent")">
+            <i class="fas fa-lock"></i> Alterar Senha
+        </a>
+    </div>
+
+    @* ── ABA DADOS PESSOAIS ─────────────────────────────────────────── *@
+    @if (activeTab == "dados")
+    {
+        <div class="admin-card" style="margin-top:1.5rem">
+            <h2 style="font-size:1rem;font-weight:600;margin:0 0 1.5rem;color:#fff">Dados Pessoais</h2>
+            <form asp-action="Profile" method="post">
+                @Html.AntiForgeryToken()
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+                    <div style="display:flex;flex-direction:column;gap:.4rem">
+                        <label asp-for="Nome" style="font-size:.8rem;color:#aaa">Nome</label>
+                        <input asp-for="Nome" style="background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.6rem .9rem;font-size:.875rem" />
+                        <span asp-validation-for="Nome" style="font-size:.75rem;color:#ef4444"></span>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:.4rem">
+                        <label asp-for="Sobrenome" style="font-size:.8rem;color:#aaa">Sobrenome</label>
+                        <input asp-for="Sobrenome" style="background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.6rem .9rem;font-size:.875rem" />
+                        <span asp-validation-for="Sobrenome" style="font-size:.75rem;color:#ef4444"></span>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:.4rem">
+                        <label asp-for="Email" style="font-size:.8rem;color:#aaa">E-mail</label>
+                        <input asp-for="Email" disabled style="background:#1a1a1d;border:1px solid #222;border-radius:8px;color:#666;padding:.6rem .9rem;font-size:.875rem" />
+                        <small style="color:#555">E-mail não pode ser alterado</small>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:.4rem">
+                        <label asp-for="Telefone" style="font-size:.8rem;color:#aaa">Telefone</label>
+                        <input asp-for="Telefone" style="background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.6rem .9rem;font-size:.875rem" placeholder="(00) 99999-9999" />
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:.4rem">
+                        <label asp-for="Cpf" style="font-size:.8rem;color:#aaa">CPF</label>
+                        <input asp-for="Cpf" style="background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.6rem .9rem;font-size:.875rem" placeholder="000.000.000-00" />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn--primary" style="margin-top:1.5rem">
+                    <i class="fas fa-save"></i> Salvar Alterações
+                </button>
+            </form>
+        </div>
+    }
+
+    @* ── ABA ENDEREÇOS ─────────────────────────────────────────────── *@
+    @if (activeTab == "enderecos")
+    {
+        <div class="admin-card" style="margin-top:1.5rem">
+            <h2 style="font-size:1rem;font-weight:600;margin:0 0 1.5rem;color:#fff">Meus Endereços</h2>
+
+            @if (Model.Addresses.Any())
+            {
+                <div style="display:grid;gap:1rem;margin-bottom:2rem">
+                    @foreach (var addr in Model.Addresses)
+                    {
+                        <div style="border:1px solid @(addr.Principal ? "#d4af37" : "#2a2a2d");border-radius:10px;padding:1rem 1.25rem;display:flex;gap:1rem;align-items:flex-start">
+                            <i class="fas fa-map-marker-alt" style="color:@(addr.Principal ? "#d4af37" : "#555");margin-top:3px"></i>
+                            <div style="flex:1">
+                                <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem">
+                                    <strong style="color:#fff">@(addr.Apelido ?? "Endereço")</strong>
+                                    @if (addr.Principal) { <span style="font-size:.7rem;background:#d4af37;color:#000;border-radius:99px;padding:0 8px">Principal</span> }
+                                </div>
+                                <p style="margin:0;color:#aaa;font-size:.85rem">@addr.Rua, @addr.Numero @addr.Complemento — @addr.Bairro</p>
+                                <p style="margin:0;color:#aaa;font-size:.85rem">@addr.Cidade / @addr.Estado — CEP @addr.Cep</p>
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:.4rem">
+                                <button onclick="editarEndereco(@addr.Id, '@addr.Apelido', '@addr.Cep', '@addr.Rua', '@addr.Numero', '@addr.Complemento', '@addr.Bairro', '@addr.Cidade', '@addr.Estado', '@addr.Referencia', @addr.Principal.ToString().ToLower())"
+                                        class="btn btn--ghost" style="padding:.4rem .75rem;font-size:.8rem">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <form asp-action="DeleteAddress" asp-route-id="@addr.Id" method="post" onsubmit="return confirm('Remover este endereço?')">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn--ghost" style="padding:.4rem .75rem;font-size:.8rem;color:#ef4444">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            <button onclick="novoEndereco()" class="btn btn--ghost" style="margin-bottom:1.5rem">
+                <i class="fas fa-plus"></i> Adicionar Endereço
+            </button>
+
+            <!-- Formulário (oculto por padrão) -->
+            <div id="formEndereco" style="display:none;padding-top:1.5rem;border-top:1px solid #2a2a2d">
+                <h3 style="font-size:.9rem;color:#d4af37;margin-bottom:1.25rem" id="formEnderecoTitulo">Novo Endereço</h3>
+                <form asp-action="SaveAddress" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" id="addrId" value="0" />
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                        <div style="grid-column:span 2;display:flex;flex-direction:column;gap:.4rem">
+                            <label style="font-size:.8rem;color:#aaa">Apelido (ex: Casa, Trabalho)</label>
+                            <input type="text" name="Apelido" id="addrApelido" maxlength="50" style="background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.6rem .9rem;font-size:.875rem" />
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:.4rem">
+                            <label style="font-size:.8rem;color:#aaa">CEP</label>
+                            <div style="display:flex;gap:8px">
+                                <input type="text" name="Cep" id="addrCep" maxlength="9" placeholder="00000-000" style="flex:1;background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.6rem .9rem;font-size:.875rem" required />
+                                <button type="button" onclick="buscarCepPerfil()" class="btn btn--sm">Buscar</button>
+                            </div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:.4rem">
+                            <label style="font-size:.8rem;color:#aaa">Estado</label>
+                            <input type="text" name="Estado" id="addrEstado" maxlength="2" style="background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.6rem .9rem;font-size:.875rem" required />
+                        </div>
+                        <div style="grid-column:span 2;display:flex;flex-direction:column;gap:.4rem">
+                            <label style="font-size:.8rem;color:#aaa">Rua / Avenida</label>
+                            <input type="text" name="Rua" id="addrRua" maxlength="200" style="background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.6rem .9rem;font-size:.875rem" required />
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:.4rem">
+                            <label style="font-size:.8rem;color:#aaa">Número</label>
+                            <input type="text" name="Numero" id="addrNumero" maxlength="20" style="background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.6rem .9rem;font-size:.875rem" required />
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:.4rem">
+                            <label style="font-size:.8rem;color:#aaa">Complemento</label>
+                            <input type="text" name="Complemento" id="addrCompl" maxlength="100" placeholder="Apto, bloco..." style="background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.6rem .9rem;font-size:.875rem" />
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:.4rem">
+                            <label style="font-size:.8rem;color:#aaa">Bairro</label>
+                            <input type="text" name="Bairro" id="addrBairro" maxlength="100" style="background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.6rem .9rem;font-size:.875rem" required />
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:.4rem">
+                            <label style="font-size:.8rem;color:#aaa">Cidade</label>
+                            <input type="text" name="Cidade" id="addrCidade" maxlength="100" style="background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.6rem .9rem;font-size:.875rem" required />
+                        </div>
+                        <div style="grid-column:span 2;display:flex;flex-direction:column;gap:.4rem">
+                            <label style="font-size:.8rem;color:#aaa">Ponto de referência</label>
+                            <input type="text" name="Referencia" id="addrRef" maxlength="200" style="background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.6rem .9rem;font-size:.875rem" />
+                        </div>
+                        <div style="grid-column:span 2;display:flex;align-items:center;gap:.6rem">
+                            <input type="checkbox" name="Principal" id="addrPrincipal" value="true" />
+                            <label for="addrPrincipal" style="color:#aaa;font-size:.875rem">Definir como endereço principal</label>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:.75rem;margin-top:1.25rem">
+                        <button type="submit" class="btn btn--primary"><i class="fas fa-save"></i> Salvar</button>
+                        <button type="button" onclick="fecharFormEndereco()" class="btn btn--ghost">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+
+    @* ── ABA ALTERAR SENHA ─────────────────────────────────────────── *@
+    @if (activeTab == "senha")
+    {
+        <div class="admin-card" style="margin-top:1.5rem">
+            <h2 style="font-size:1rem;font-weight:600;margin:0 0 1.5rem;color:#fff">Alterar Senha</h2>
+            <form asp-action="ChangePassword" asp-controller="Account" method="post">
+                @Html.AntiForgeryToken()
+                <div style="display:flex;flex-direction:column;gap:1rem;max-width:380px">
+                    <div style="display:flex;flex-direction:column;gap:.4rem">
+                        <label style="font-size:.8rem;color:#aaa">Senha Atual</label>
+                        <input type="password" name="SenhaAtual" style="background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.6rem .9rem;font-size:.875rem" required />
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:.4rem">
+                        <label style="font-size:.8rem;color:#aaa">Nova Senha</label>
+                        <input type="password" name="NovaSenha" style="background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.6rem .9rem;font-size:.875rem" required minlength="6" />
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:.4rem">
+                        <label style="font-size:.8rem;color:#aaa">Confirmar Nova Senha</label>
+                        <input type="password" name="ConfirmarNovaSenha" style="background:#0d0d0f;border:1px solid #333;border-radius:8px;color:#fff;padding:.6rem .9rem;font-size:.875rem" required />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn--ghost" style="margin-top:1.25rem">
+                    <i class="fas fa-lock"></i> Alterar Senha
+                </button>
+            </form>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+    function novoEndereco() {
+        document.getElementById('formEnderecoTitulo').textContent = 'Novo Endereço';
+        document.getElementById('addrId').value = '0';
+        ['addrApelido','addrCep','addrRua','addrNumero','addrCompl','addrBairro','addrCidade','addrEstado','addrRef'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.value = '';
+        });
+        document.getElementById('addrPrincipal').checked = false;
+        document.getElementById('formEndereco').style.display = 'block';
+        document.getElementById('formEndereco').scrollIntoView({ behavior: 'smooth' });
+    }
+    function editarEndereco(id, apelido, cep, rua, numero, compl, bairro, cidade, estado, ref, principal) {
+        document.getElementById('formEnderecoTitulo').textContent = 'Editar Endereço';
+        document.getElementById('addrId').value = id;
+        document.getElementById('addrApelido').value = apelido || '';
+        document.getElementById('addrCep').value = cep || '';
+        document.getElementById('addrRua').value = rua || '';
+        document.getElementById('addrNumero').value = numero || '';
+        document.getElementById('addrCompl').value = compl || '';
+        document.getElementById('addrBairro').value = bairro || '';
+        document.getElementById('addrCidade').value = cidade || '';
+        document.getElementById('addrEstado').value = estado || '';
+        document.getElementById('addrRef').value = ref || '';
+        document.getElementById('addrPrincipal').checked = principal;
+        document.getElementById('formEndereco').style.display = 'block';
+        document.getElementById('formEndereco').scrollIntoView({ behavior: 'smooth' });
+    }
+    function fecharFormEndereco() {
+        document.getElementById('formEndereco').style.display = 'none';
+    }
+    async function buscarCepPerfil() {
+        const cep = document.getElementById('addrCep').value.replace(/\D/g,'');
+        if (cep.length !== 8) { alert('CEP inválido'); return; }
+        try {
+            const r = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+            const d = await r.json();
+            if (!d.erro) {
+                document.getElementById('addrRua').value = d.logradouro || '';
+                document.getElementById('addrBairro').value = d.bairro || '';
+                document.getElementById('addrCidade').value = d.localidade || '';
+                document.getElementById('addrEstado').value = d.uf || '';
+            } else { alert('CEP não encontrado'); }
+        } catch { alert('Erro ao buscar CEP'); }
+    }
+    // Abrir formulário se redirecionou após erro
+    @if (activeTab == "enderecos" && ViewData["OpenForm"] != null) {
+        <text>novoEndereco();</text>
+    }
+</script>
+}

@@ -1,0 +1,262 @@
+@{
+    var currentPath = Context.Request.Path.Value ?? "";
+    bool IsActive(string path) => currentPath.StartsWith(path, StringComparison.OrdinalIgnoreCase);
+}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — ESSENZ Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        body { background: #0d0d0f; font-family: 'Inter', sans-serif; margin: 0; }
+
+        .adm { display: flex; min-height: 100vh; }
+
+        /* Sidebar */
+        .adm-sidebar {
+            width: 240px; min-height: 100vh; background: #111114;
+            border-right: 1px solid #222; display: flex; flex-direction: column;
+            position: fixed; top: 0; left: 0; z-index: 100;
+        }
+        .adm-logo {
+            padding: 1.5rem 1.25rem; font-size: 1.1rem; font-weight: 700;
+            letter-spacing: 2px; color: #fff; border-bottom: 1px solid #222;
+            text-transform: uppercase;
+        }
+        .adm-logo span { color: var(--gold, #c9a84c); }
+        .adm-nav { padding: 1rem 0; flex: 1; overflow-y: auto; }
+        .adm-nav a, .adm-nav button {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.75rem 1.25rem; color: #888; text-decoration: none;
+            font-size: 0.875rem; transition: all .2s; cursor: pointer;
+            background: none; border: none; width: 100%; text-align: left;
+        }
+        .adm-nav a:hover, .adm-nav button:hover { color: #fff; background: rgba(255,255,255,.05); }
+        .adm-nav a.active, .adm-nav a.active i { color: var(--gold, #c9a84c); }
+        .adm-nav .adm-nav__sep { height: 1px, background: #222, margin: 0.5rem 1.25rem; }
+        .adm-nav__label {
+            font-size: 0.65rem; letter-spacing: 1.5px; text-transform: uppercase;
+            color: #444; padding: 0.75rem 1.25rem 0.25rem; font-weight: 600;
+        }
+
+        /* Main content */
+        .adm-main { margin-left: 240px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+        .adm-topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1rem 2rem; background: #111114; border-bottom: 1px solid #222;
+            position: sticky; top: 0; z-index: 50;
+        }
+        .adm-topbar__title { font-size: 1.1rem; font-weight: 600; color: #fff; margin: 0; }
+        .adm-body { padding: 2rem; flex: 1; }
+
+        /* Cards */
+        .adm-card {
+            background: #111114; border: 1px solid #222; border-radius: 12px;
+            padding: 1.5rem; margin-bottom: 1.5rem;
+        }
+        .adm-card__title { font-size: 0.875rem; font-weight: 600; color: #fff; margin: 0 0 1rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* KPI grid */
+        .adm-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .kpi {
+            background: #111114; border: 1px solid #222; border-radius: 12px;
+            padding: 1.25rem; display: flex; align-items: center; gap: 1rem;
+        }
+        .kpi__icon {
+            width: 48px; height: 48px; border-radius: 10px; display: grid;
+            place-items: center; font-size: 1.1rem; flex-shrink: 0;
+        }
+        .kpi__icon--green { background: rgba(16,185,129,.15); color: #10b981; }
+        .kpi__icon--blue  { background: rgba(59,130,246,.15); color: #3b82f6; }
+        .kpi__icon--orange{ background: rgba(245,158,11,.15); color: #f59e0b; }
+        .kpi__icon--purple{ background: rgba(139,92,246,.15); color: #8b5cf6; }
+        .kpi__icon--red   { background: rgba(239,68,68,.15);  color: #ef4444; }
+        .kpi__icon--gold  { background: rgba(201,168,76,.15); color: #c9a84c; }
+        .kpi__value { font-size: 1.4rem; font-weight: 700; color: #fff; line-height: 1; }
+        .kpi__label { font-size: 0.75rem; color: #888; margin-top: 0.2rem; }
+
+        /* Table */
+        .adm-table-wrap { overflow-x: auto; }
+        .adm-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        .adm-table th { text-align: left; padding: 0.75rem 1rem; color: #888; font-weight: 500; border-bottom: 1px solid #222; white-space: nowrap; }
+        .adm-table td { padding: 0.85rem 1rem; color: #ccc; border-bottom: 1px solid #1a1a1d; vertical-align: middle; }
+        .adm-table tr:last-child td { border-bottom: none; }
+        .adm-table tr:hover td { background: rgba(255,255,255,.02); }
+        .adm-table td strong { color: #fff; }
+
+        /* Badge de status */
+        .badge {
+            display: inline-flex; align-items: center; padding: 0.25rem 0.6rem;
+            border-radius: 20px; font-size: 0.72rem; font-weight: 600; letter-spacing: .3px;
+        }
+        .badge--pending  { background: rgba(245,158,11,.15); color: #f59e0b; }
+        .badge--paid     { background: rgba(16,185,129,.15); color: #10b981; }
+        .badge--shipped  { background: rgba(59,130,246,.15); color: #3b82f6; }
+        .badge--delivered{ background: rgba(16,185,129,.25); color: #10b981; }
+        .badge--cancelled{ background: rgba(239,68,68,.15);  color: #ef4444; }
+        .badge--approved { background: rgba(16,185,129,.15); color: #10b981; }
+        .badge--refunded { background: rgba(139,92,246,.15); color: #8b5cf6; }
+        .badge--active   { background: rgba(16,185,129,.15); color: #10b981; }
+        .badge--inactive { background: rgba(239,68,68,.15);  color: #ef4444; }
+        .badge--low      { background: rgba(245,158,11,.15); color: #f59e0b; }
+
+        /* Form admin */
+        .adm-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        .adm-form-grid--3 { grid-template-columns: 1fr 1fr 1fr; }
+        .adm-form-grid--full { grid-column: 1/-1; }
+        .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+        .form-group label { font-size: 0.8rem; font-weight: 500; color: #aaa; }
+        .form-group input, .form-group select, .form-group textarea {
+            background: #0d0d0f; border: 1px solid #333; border-radius: 8px;
+            color: #fff; padding: 0.6rem 0.9rem; font-size: 0.875rem; width: 100%; box-sizing: border-box;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none; border-color: var(--gold, #c9a84c);
+        }
+        .form-group textarea { min-height: 100px; resize: vertical; }
+        .form-check { display: flex; align-items: center; gap: 0.5rem; }
+        .form-check input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--gold, #c9a84c); }
+        .form-check label { font-size: 0.875rem; color: #ccc; cursor: pointer; margin: 0; }
+        .field-validation-error { font-size: 0.75rem; color: #ef4444; }
+
+        /* Buttons */
+        .btn-adm {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.6rem 1.25rem; border-radius: 8px; font-size: 0.875rem;
+            font-weight: 600; cursor: pointer; border: none; text-decoration: none; transition: opacity .2s;
+        }
+        .btn-adm:hover { opacity: 0.85; }
+        .btn-adm--gold { background: var(--gold, #c9a84c); color: #000; }
+        .btn-adm--ghost { background: transparent; border: 1px solid #333; color: #ccc; }
+        .btn-adm--danger { background: rgba(239,68,68,.15); color: #ef4444; border: 1px solid rgba(239,68,68,.3); }
+        .btn-adm--sm { padding: 0.4rem 0.9rem; font-size: 0.8rem; }
+
+        /* Alerts */
+        .alert { padding: 0.85rem 1.25rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.875rem; }
+        .alert--success { background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.3); color: #10b981; }
+        .alert--danger  { background: rgba(239,68,68,.1);  border: 1px solid rgba(239,68,68,.3);  color: #ef4444; }
+        .alert--info    { background: rgba(59,130,246,.1); border: 1px solid rgba(59,130,246,.3); color: #3b82f6; }
+
+        /* Pagination */
+        .adm-pagination { display: flex; gap: 0.5rem; align-items: center; justify-content: flex-end; margin-top: 1.5rem; }
+        .adm-pagination a, .adm-pagination span {
+            padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; text-decoration: none; color: #aaa;
+        }
+        .adm-pagination a { border: 1px solid #333; }
+        .adm-pagination a:hover { border-color: var(--gold, #c9a84c); color: var(--gold, #c9a84c); }
+        .adm-pagination .active { background: var(--gold, #c9a84c); color: #000; border-radius: 6px; font-weight: 600; }
+
+        /* Modal */
+        .adm-modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 999; place-items: center; }
+        .adm-modal-bg.open { display: grid; }
+        .adm-modal { background: #111114; border: 1px solid #333; border-radius: 16px; padding: 2rem; width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto; }
+        .adm-modal__title { font-size: 1rem; font-weight: 700; color: #fff; margin: 0 0 1.5rem; }
+        .adm-modal__footer { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; }
+
+        @@media (max-width: 768px) {
+            .adm-sidebar { transform: translateX(-100%); transition: .3s; }
+            .adm-sidebar.open { transform: translateX(0); }
+            .adm-main { margin-left: 0; }
+            .adm-form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+    @RenderSection("Styles", required: false)
+</head>
+<body>
+<div class="adm">
+    <aside class="adm-sidebar" id="admSidebar">
+        <div class="adm-logo">ESSENZ <span>ADM</span></div>
+        <nav class="adm-nav">
+            <div class="adm-nav__label">Principal</div>
+            <a href="/admin" class="@(currentPath == "/admin" || currentPath == "/admin/dashboard" ? "active" : "")">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a>
+            <div class="adm-nav__label">Catálogo</div>
+            <a href="/admin/produtos" class="@(IsActive("/admin/produtos") ? "active" : "")">
+                <i class="fas fa-box"></i> Produtos
+            </a>
+            <a href="/admin/categorias" class="@(IsActive("/admin/categorias") ? "active" : "")">
+                <i class="fas fa-tags"></i> Categorias
+            </a>
+            <a href="/admin/marcas" class="@(IsActive("/admin/marcas") ? "active" : "")">
+                <i class="fas fa-trademark"></i> Marcas
+            </a>
+            <div class="adm-nav__label">Vendas</div>
+            <a href="/admin/pedidos" class="@(IsActive("/admin/pedidos") ? "active" : "")">
+                <i class="fas fa-shopping-cart"></i> Pedidos
+            </a>
+            <a href="/admin/devolucoes" class="@(IsActive("/admin/devolucoes") ? "active" : "")">
+                <i class="fas fa-rotate-left"></i> Trocas & Devoluções
+            </a>
+            <a href="/admin/clientes" class="@(IsActive("/admin/clientes") ? "active" : "")">
+                <i class="fas fa-users"></i> Clientes
+            </a>
+            <a href="/admin/financeiro" class="@(IsActive("/admin/financeiro") ? "active" : "")">
+                <i class="fas fa-wallet"></i> Financeiro & Operação
+            </a>
+            <div class="adm-nav__label">Marketing</div>
+            <a href="/admin/cupons" class="@(IsActive("/admin/cupons") ? "active" : "")">
+                <i class="fas fa-ticket-alt"></i> Cupons
+            </a>
+            <a href="/admin/banners" class="@(IsActive("/admin/banners") ? "active" : "")">
+                <i class="fas fa-image"></i> Banners
+            </a>
+            <a href="/admin/conteudo" class="@(IsActive("/admin/conteudo") ? "active" : "")">
+                <i class="fas fa-file-alt"></i> Páginas & FAQ
+            </a>
+            <div class="adm-nav__label">Configurar</div>
+            <a href="/admin/equipe" class="@(IsActive("/admin/equipe") ? "active" : "")">
+                <i class="fas fa-user-shield"></i> Equipe & Permissões
+            </a>
+            <a href="/admin/configuracoes" class="@(IsActive("/admin/configuracoes") ? "active" : "")">
+                <i class="fas fa-cog"></i> Configurações
+            </a>
+            <div class="adm-nav__sep"></div>
+            <a href="/" target="_blank"><i class="fas fa-store"></i> Ver loja</a>
+            <form asp-controller="Account" asp-action="Logout" method="post" style="margin:0">
+                @Html.AntiForgeryToken()
+                <button type="submit"><i class="fas fa-sign-out-alt"></i> Sair</button>
+            </form>
+        </nav>
+    </aside>
+
+    <div class="adm-main">
+        <div class="adm-topbar">
+            <h1 class="adm-topbar__title">@ViewData["Title"]</h1>
+            <div style="display:flex;align-items:center;gap:1rem">
+                @RenderSection("TopbarActions", required: false)
+                <span style="font-size:0.8rem;color:#666">@User.Identity?.Name</span>
+            </div>
+        </div>
+
+        <div class="adm-body">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert--success"><i class="fas fa-check-circle"></i> @TempData["Success"]</div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert--danger"><i class="fas fa-exclamation-circle"></i> @TempData["Error"]</div>
+            }
+            @RenderBody()
+        </div>
+    </div>
+</div>
+
+<script src="~/js/site.js" asp-append-version="true"></script>
+@RenderSection("Scripts", required: false)
+<script>
+    // Mobile sidebar toggle
+    document.addEventListener('DOMContentLoaded', function () {
+        const btn = document.getElementById('admMenuBtn');
+        const sidebar = document.getElementById('admSidebar');
+        if (btn && sidebar) btn.addEventListener('click', () => sidebar.classList.toggle('open'));
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,188 @@
+@{
+    ViewData["Title"] = "Conteúdo";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var pages = (List<EssenzStore.Models.StorePage>)ViewBag.Pages;
+    var faqs = (List<EssenzStore.Models.FaqItem>)ViewBag.Faqs;
+}
+
+@section TopbarActions {
+    <button class="btn-adm btn-adm--gold btn-adm--sm" onclick="abrirModal('modalPagina')">
+        <i class="fas fa-plus"></i> Nova Página
+    </button>
+    <button class="btn-adm btn-adm--ghost btn-adm--sm" onclick="abrirModal('modalFaq')">
+        <i class="fas fa-plus"></i> Novo FAQ
+    </button>
+}
+
+<!-- Páginas -->
+<div class="adm-card" style="margin-bottom:1.5rem">
+    <p class="adm-card__title">Páginas do Site</p>
+    <div class="adm-table-wrap">
+        <table class="adm-table">
+            <thead>
+                <tr><th>Título</th><th>Slug (URL)</th><th>Publicado</th><th style="text-align:right">Ações</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var pg in pages)
+                {
+                    <tr>
+                        <td><strong>@pg.Titulo</strong></td>
+                        <td style="color:#666">/p/@pg.Slug</td>
+                        <td><span class="badge badge--@(pg.Publicado ? "active" : "inactive")">@(pg.Publicado ? "Sim" : "Não")</span></td>
+                        <td style="text-align:right">
+                            <button class="btn-adm btn-adm--ghost btn-adm--sm"
+                                    onclick="editarPagina({id:@pg.Id,titulo:'@pg.Titulo.Replace("'","&#39;")',slug:'@pg.Slug',publicado:@(pg.Publicado ? "true" : "false"),conteudo:@Html.Raw(System.Text.Json.JsonSerializer.Serialize(pg.ConteudoHtml ?? ""))})">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                        </td>
+                    </tr>
+                }
+                @if (!pages.Any())
+                {
+                    <tr><td colspan="4" style="text-align:center;color:#555;padding:2rem">Nenhuma página cadastrada.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- FAQ -->
+<div class="adm-card">
+    <p class="adm-card__title">Perguntas Frequentes (FAQ)</p>
+    <div class="adm-table-wrap">
+        <table class="adm-table">
+            <thead>
+                <tr><th>Ordem</th><th>Pergunta</th><th>Ativo</th><th style="text-align:right">Ações</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var faq in faqs)
+                {
+                    <tr>
+                        <td style="color:#666">@faq.Ordem</td>
+                        <td><strong>@faq.Pergunta</strong></td>
+                        <td><span class="badge badge--@(faq.Ativo ? "active" : "inactive")">@(faq.Ativo ? "Sim" : "Não")</span></td>
+                        <td style="text-align:right">
+                            <div style="display:flex;gap:.5rem;justify-content:flex-end">
+                                <button class="btn-adm btn-adm--ghost btn-adm--sm"
+                                        onclick="editarFaq({id:@faq.Id,pergunta:'@faq.Pergunta.Replace("'","&#39;")',resposta:@Html.Raw(System.Text.Json.JsonSerializer.Serialize(faq.Resposta)),ordem:@faq.Ordem,ativo:@(faq.Ativo ? "true" : "false")})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <form asp-action="ExcluirFaq" asp-controller="Admin" asp-route-id="@faq.Id" method="post" onsubmit="return confirm('Excluir este FAQ?')">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-adm btn-adm--danger btn-adm--sm"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @if (!faqs.Any())
+                {
+                    <tr><td colspan="4" style="text-align:center;color:#555;padding:2rem">Nenhuma pergunta cadastrada.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Página -->
+<div class="adm-modal-bg" id="modalPagina">
+    <div class="adm-modal" style="max-width:680px">
+        <p class="adm-modal__title" id="modalPaginaTitulo">Nova Página</p>
+        <form asp-action="SalvarPagina" asp-controller="Admin" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" id="paginaId" value="0" />
+            <div class="adm-form-grid">
+                <div class="form-group">
+                    <label>Título *</label>
+                    <input type="text" name="Titulo" id="paginaTitulo" required />
+                </div>
+                <div class="form-group">
+                    <label>Slug (URL)</label>
+                    <input type="text" name="Slug" id="paginaSlug" placeholder="quem-somos" />
+                </div>
+                <div class="form-group adm-form-grid--full">
+                    <label>Conteúdo HTML</label>
+                    <textarea name="ConteudoHtml" id="paginaConteudo" style="min-height:200px;font-family:monospace;font-size:.8rem"></textarea>
+                </div>
+                <div class="form-group adm-form-grid--full">
+                    <div class="form-check">
+                        <input type="checkbox" name="Publicado" id="paginaPublicado" value="true" checked />
+                        <label for="paginaPublicado">Publicada</label>
+                    </div>
+                </div>
+            </div>
+            <div class="adm-modal__footer">
+                <button type="button" class="btn-adm btn-adm--ghost" onclick="fecharModal('modalPagina')">Cancelar</button>
+                <button type="submit" class="btn-adm btn-adm--gold"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal FAQ -->
+<div class="adm-modal-bg" id="modalFaq">
+    <div class="adm-modal">
+        <p class="adm-modal__title" id="modalFaqTitulo">Novo FAQ</p>
+        <form asp-action="SalvarFaq" asp-controller="Admin" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" id="faqId" value="0" />
+            <div class="adm-form-grid">
+                <div class="form-group adm-form-grid--full">
+                    <label>Pergunta *</label>
+                    <input type="text" name="Pergunta" id="faqPergunta" required />
+                </div>
+                <div class="form-group adm-form-grid--full">
+                    <label>Resposta *</label>
+                    <textarea name="Resposta" id="faqResposta" required style="min-height:100px"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Ordem</label>
+                    <input type="number" name="Ordem" id="faqOrdem" value="1" />
+                </div>
+                <div class="form-group" style="justify-content:flex-end;align-items:flex-end">
+                    <div class="form-check">
+                        <input type="checkbox" name="Ativo" id="faqAtivo" value="true" checked />
+                        <label for="faqAtivo">Ativo</label>
+                    </div>
+                </div>
+            </div>
+            <div class="adm-modal__footer">
+                <button type="button" class="btn-adm btn-adm--ghost" onclick="fecharModal('modalFaq')">Cancelar</button>
+                <button type="submit" class="btn-adm btn-adm--gold"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function abrirModal(id) { document.getElementById(id).classList.add('open'); }
+function fecharModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function editarPagina(p) {
+    document.getElementById('modalPaginaTitulo').textContent = 'Editar Página';
+    document.getElementById('paginaId').value = p.id;
+    document.getElementById('paginaTitulo').value = p.titulo;
+    document.getElementById('paginaSlug').value = p.slug;
+    document.getElementById('paginaConteudo').value = p.conteudo;
+    document.getElementById('paginaPublicado').checked = p.publicado;
+    abrirModal('modalPagina');
+}
+
+function editarFaq(f) {
+    document.getElementById('modalFaqTitulo').textContent = 'Editar FAQ';
+    document.getElementById('faqId').value = f.id;
+    document.getElementById('faqPergunta').value = f.pergunta;
+    document.getElementById('faqResposta').value = f.resposta;
+    document.getElementById('faqOrdem').value = f.ordem;
+    document.getElementById('faqAtivo').checked = f.ativo;
+    abrirModal('modalFaq');
+}
+
+document.getElementById('paginaTitulo')?.addEventListener('input', function() {
+    const slug = document.getElementById('paginaSlug');
+    if (!slug.dataset.manual) slug.value = this.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+});
+document.getElementById('paginaSlug')?.addEventListener('input', function() { this.dataset.manual = '1'; });
+</script>
+}

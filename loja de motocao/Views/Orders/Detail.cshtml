@@ -1,0 +1,143 @@
+@model EssenzStore.Models.ViewModels.OrderDetailViewModel
+@{
+    ViewData["Title"] = $"Pedido #{Model.Order.NumeroPedido}";
+    var address = System.Text.Json.JsonDocument.Parse(Model.Order.EnderecoEntregaJson).RootElement;
+    string GetAddr(string key) { try { return address.GetProperty(key).GetString() ?? ""; } catch { return ""; } }
+}
+
+<div class="page-header">
+    <div class="container">
+        <nav class="breadcrumb">
+            <a href="/">Home</a>
+            <i class="fas fa-chevron-right"></i>
+            <a href="/minha-conta">Minha Conta</a>
+            <i class="fas fa-chevron-right"></i>
+            <a href="/minha-conta/pedidos">Pedidos</a>
+            <i class="fas fa-chevron-right"></i>
+            <span>#@Model.Order.NumeroPedido</span>
+        </nav>
+        <h1 class="page-header__title">Pedido #@Model.Order.NumeroPedido</h1>
+    </div>
+</div>
+
+<div class="container" style="padding-bottom:4rem">
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;margin-top:2rem;align-items:start">
+
+        <!-- Coluna principal -->
+        <div>
+            <!-- Status timeline -->
+            <div class="admin-card" style="margin-bottom:1.5rem">
+                <h3 style="font-size:1rem;font-weight:600;margin:0 0 1.5rem;color:#fff">Acompanhamento</h3>
+                @{
+                    var steps = new[] {
+                        ("Pedido Realizado", "fas fa-check", (int)Model.Order.Status >= 0),
+                        ("Pagamento Confirmado", "fas fa-credit-card", Model.Order.PaymentStatus == EssenzStore.Models.PaymentStatus.Approved),
+                        ("Em Preparação", "fas fa-box", (int)Model.Order.Status >= 2),
+                        ("Enviado", "fas fa-truck", (int)Model.Order.Status >= 3),
+                        ("Entregue", "fas fa-home", Model.Order.Status == EssenzStore.Models.OrderStatus.Delivered)
+                    };
+                }
+                <div style="display:flex;align-items:flex-start;gap:0;overflow-x:auto">
+                    @for (int i = 0; i < steps.Length; i++)
+                    {
+                        var (label, icon, done) = steps[i];
+                        <div style="flex:1;text-align:center;position:relative;min-width:80px">
+                            @if (i < steps.Length - 1)
+                            {
+                                <div style="position:absolute;top:16px;left:50%;right:-50%;height:2px;background:@(done && (i + 1 < steps.Length && steps[i + 1].Item3) ? "var(--gold,#c9a84c)" : "#333");z-index:0"></div>
+                            }
+                            <div style="width:32px;height:32px;border-radius:50%;background:@(done ? "var(--gold,#c9a84c)" : "#222");border:2px solid @(done ? "var(--gold,#c9a84c)" : "#333");display:grid;place-items:center;margin:0 auto;position:relative;z-index:1">
+                                <i class="@icon" style="font-size:.75rem;color:@(done ? "#000" : "#555")"></i>
+                            </div>
+                            <p style="font-size:.7rem;color:@(done ? "#fff" : "#555");margin:.5rem 0 0;line-height:1.3">@label</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Itens -->
+            <div class="admin-card" style="margin-bottom:1.5rem">
+                <h3 style="font-size:1rem;font-weight:600;margin:0 0 1.25rem;color:#fff">Itens do Pedido</h3>
+                @foreach (var item in Model.Order.Items)
+                {
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem 0;border-bottom:1px solid #1a1a1d">
+                        <div>
+                            <strong style="font-size:.9rem">@item.NomeProdutoSnapshot</strong>
+                            <div style="font-size:.8rem;color:#666">
+                                @item.MarcaSnapshot
+                                @if (!string.IsNullOrEmpty(item.CorSnapshot)) { <span>| @item.CorSnapshot</span> }
+                                @if (!string.IsNullOrEmpty(item.TamanhoSnapshot)) { <span>| Tam. @item.TamanhoSnapshot</span> }
+                            </div>
+                            <div style="font-size:.8rem;color:#888">Qtd: @item.Quantidade × R$ @item.PrecoUnitarioSnapshot.ToString("N2")</div>
+                        </div>
+                        <strong>R$ @item.Subtotal.ToString("N2")</strong>
+                    </div>
+                }
+                <div style="margin-top:1rem;display:flex;flex-direction:column;gap:.4rem;font-size:.875rem">
+                    <div style="display:flex;justify-content:space-between;color:#888"><span>Subtotal</span><span>R$ @Model.Order.Subtotal.ToString("N2")</span></div>
+                    @if (Model.Order.Desconto > 0)
+                    {
+                        <div style="display:flex;justify-content:space-between;color:#10b981"><span>Desconto</span><span>-R$ @Model.Order.Desconto.ToString("N2")</span></div>
+                    }
+                    <div style="display:flex;justify-content:space-between;color:#888"><span>Frete</span><span>R$ @Model.Order.Frete.ToString("N2")</span></div>
+                    <div style="display:flex;justify-content:space-between;font-weight:700;color:#fff;border-top:1px solid #222;padding-top:.6rem;margin-top:.4rem">
+                        <span>Total</span><span>R$ @Model.Order.Total.ToString("N2")</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rastreamento -->
+            @if (Model.Shipment != null && Model.TrackingEvents.Any())
+            {
+                <div class="admin-card">
+                    <h3 style="font-size:1rem;font-weight:600;margin:0 0 1.25rem;color:#fff">
+                        <i class="fas fa-truck" style="color:var(--gold,#c9a84c)"></i> Rastreamento
+                        @if (!string.IsNullOrEmpty(Model.Shipment.CodigoRastreio))
+                        {
+                            <span style="font-size:.8rem;color:#888;margin-left:.5rem">@Model.Shipment.CodigoRastreio</span>
+                        }
+                    </h3>
+                    @foreach (var ev in Model.TrackingEvents)
+                    {
+                        <div style="display:flex;gap:1rem;margin-bottom:1rem">
+                            <div style="font-size:.75rem;color:#666;white-space:nowrap;padding-top:.1rem">@ev.EventDate.ToString("dd/MM HH:mm")</div>
+                            <div>
+                                <div style="font-size:.875rem;color:#ccc">@ev.Descricao</div>
+                                @if (!string.IsNullOrEmpty(ev.Local)) { <div style="font-size:.75rem;color:#555">@ev.Local</div> }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Coluna lateral -->
+        <div>
+            <div class="admin-card" style="margin-bottom:1rem">
+                <h3 style="font-size:.9rem;font-weight:600;margin:0 0 1rem;color:#fff">Informações</h3>
+                <div style="font-size:.82rem;display:flex;flex-direction:column;gap:.6rem">
+                    <div><span style="color:#666">Status:</span> <span class="status-badge status-badge--@Model.Order.Status.ToString().ToLower()" style="margin-left:.3rem">@Model.Order.Status</span></div>
+                    <div><span style="color:#666">Pagamento:</span> <span style="color:#ccc;margin-left:.3rem">@Model.Payment?.Metodo</span></div>
+                    <div><span style="color:#666">Data:</span> <span style="color:#ccc;margin-left:.3rem">@Model.Order.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span></div>
+                    @if (!string.IsNullOrEmpty(Model.Shipment?.CodigoRastreio))
+                    {
+                        <div>
+                            <span style="color:#666">Rastreio:</span>
+                            <a href="/rastrear?codigo=@Model.Shipment.CodigoRastreio" style="color:var(--gold,#c9a84c);margin-left:.3rem">@Model.Shipment.CodigoRastreio</a>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <h3 style="font-size:.9rem;font-weight:600;margin:0 0 1rem;color:#fff">Entrega</h3>
+                <div style="font-size:.82rem;color:#888;line-height:1.8">
+                    @GetAddr("Rua"), @GetAddr("Numero") @GetAddr("Complemento")<br>
+                    @GetAddr("Bairro")<br>
+                    @GetAddr("Cidade") / @GetAddr("Estado")<br>
+                    CEP @GetAddr("Cep")
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

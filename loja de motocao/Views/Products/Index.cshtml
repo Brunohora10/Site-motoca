@@ -1,0 +1,184 @@
+@model EssenzStore.Models.ViewModels.ProductListViewModel
+@{
+    ViewData["Title"] = Model.PageTitle;
+}
+
+<div class="page-header">
+    <div class="container">
+        <nav class="breadcrumb">
+            <a href="/">Home</a>
+            <i class="fas fa-chevron-right"></i>
+            @if (Model.CurrentCategory != null)
+            {
+                <span>@Model.CurrentCategory.Nome</span>
+            }
+            else if (Model.CurrentBrand != null)
+            {
+                <span>@Model.CurrentBrand.Nome</span>
+            }
+            else
+            {
+                <span>Todos os Produtos</span>
+            }
+        </nav>
+        <h1 class="page-header__title">@Model.PageTitle</h1>
+        <p class="page-header__count">@Model.TotalCount produto@(Model.TotalCount != 1 ? "s" : "") encontrado@(Model.TotalCount != 1 ? "s" : "")</p>
+    </div>
+</div>
+
+<div class="container catalog">
+    <div class="catalog__layout">
+        <!-- Sidebar Filtros -->
+        <aside class="catalog__sidebar" id="filterSidebar">
+            <div class="sidebar__header">
+                <h3>Filtros</h3>
+                <button class="sidebar__close" id="filterClose"><i class="fas fa-times"></i></button>
+            </div>
+
+            <form method="get" id="filterForm">
+                @if (!string.IsNullOrEmpty(Model.CategorySlug))
+                {
+                    <input type="hidden" name="CategorySlug" value="@Model.CategorySlug" />
+                }
+                @if (!string.IsNullOrEmpty(Model.BrandSlug))
+                {
+                    <input type="hidden" name="BrandSlug" value="@Model.BrandSlug" />
+                }
+                @if (!string.IsNullOrEmpty(Model.SearchQuery))
+                {
+                    <input type="hidden" name="SearchQuery" value="@Model.SearchQuery" />
+                }
+
+                @if (Model.Categories.Any())
+                {
+                    <div class="filter-group">
+                        <h4 class="filter-group__title">Categoria</h4>
+                        <ul class="filter-group__list">
+                            @foreach (var cat in Model.Categories)
+                            {
+                                <li>
+                                    <a href="/categoria/@cat.Slug" class="filter-link @(Model.CategorySlug == cat.Slug ? "active" : "")">
+                                        @cat.Nome
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                @if (Model.Brands.Any())
+                {
+                    <div class="filter-group">
+                        <h4 class="filter-group__title">Marca</h4>
+                        <ul class="filter-group__list">
+                            @foreach (var brand in Model.Brands)
+                            {
+                                <li>
+                                    <label class="filter-check">
+                                        <input type="checkbox" name="BrandId" value="@brand.Id" @(Model.BrandId == brand.Id ? "checked" : "") onchange="document.getElementById('filterForm').submit()" />
+                                        <span>@brand.Nome</span>
+                                    </label>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                @if (Model.Tamanhos.Any())
+                {
+                    <div class="filter-group">
+                        <h4 class="filter-group__title">Tamanho</h4>
+                        <div class="filter-sizes">
+                            @foreach (var tam in Model.Tamanhos)
+                            {
+                                <button type="submit" name="Tamanho" value="@tam"
+                                        class="size-btn @(Model.Tamanho == tam ? "active" : "")">@tam</button>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <div class="filter-group">
+                    <h4 class="filter-group__title">Preço</h4>
+                    <div class="filter-price">
+                        <input type="number" name="PrecoMin" value="@Model.PrecoMin" placeholder="De" class="filter-price__input" />
+                        <span>—</span>
+                        <input type="number" name="PrecoMax" value="@Model.PrecoMax" placeholder="Até" class="filter-price__input" />
+                        <button type="submit" class="btn btn--sm">OK</button>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-check">
+                        <input type="checkbox" name="SomenteLancamentos" value="true" @(Model.SomenteLancamentos == true ? "checked" : "") onchange="document.getElementById('filterForm').submit()" />
+                        <span>Apenas lançamentos</span>
+                    </label>
+                    <label class="filter-check" style="margin-top:8px">
+                        <input type="checkbox" name="SomentePromo" value="true" @(Model.SomentePromo == true ? "checked" : "") onchange="document.getElementById('filterForm').submit()" />
+                        <span>Apenas promoções</span>
+                    </label>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Tamanho) || Model.BrandId.HasValue || Model.PrecoMin.HasValue || Model.PrecoMax.HasValue || Model.SomenteLancamentos == true || Model.SomentePromo == true)
+                {
+                    <a href="@(Model.CategorySlug != null ? "/categoria/" + Model.CategorySlug : Model.BrandSlug != null ? "/marca/" + Model.BrandSlug : "/Products/Index")" class="btn btn--ghost btn--sm btn--block">
+                        <i class="fas fa-times"></i> Limpar filtros
+                    </a>
+                }
+            </form>
+        </aside>
+
+        <!-- Grid Produtos -->
+        <div class="catalog__main">
+            <div class="catalog__toolbar">
+                <button class="btn btn--ghost btn--sm" id="filterToggle">
+                    <i class="fas fa-sliders-h"></i> Filtros
+                </button>
+                <div class="catalog__sort">
+                    <label>Ordenar:</label>
+                    <select name="Sort" form="filterForm" onchange="document.getElementById('filterForm').submit()" class="sort-select">
+                        <option value="">Relevância</option>
+                        @if (Model.Sort == "menor-preco") { <option value="menor-preco" selected>Menor preço</option> } else { <option value="menor-preco">Menor preço</option> }
+                        @if (Model.Sort == "maior-preco") { <option value="maior-preco" selected>Maior preço</option> } else { <option value="maior-preco">Maior preço</option> }
+                        @if (Model.Sort == "mais-vendidos") { <option value="mais-vendidos" selected>Mais vendidos</option> } else { <option value="mais-vendidos">Mais vendidos</option> }
+                        @if (Model.Sort == "lancamentos") { <option value="lancamentos" selected>Lançamentos</option> } else { <option value="lancamentos">Lançamentos</option> }
+                    </select>
+                </div>
+            </div>
+
+            @if (Model.Products.Any())
+            {
+                <div class="products-grid">
+                    @foreach (var product in Model.Products)
+                    {
+                        @await Html.PartialAsync("_ProductCard", product)
+                    }
+                </div>
+
+                <!-- Paginação -->
+                @if (Model.TotalPages > 1)
+                {
+                    <div class="pagination">
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            var pageUrl = Url.Action("Index", "Products", new { page = i, CategorySlug = Model.CategorySlug, BrandSlug = Model.BrandSlug, Sort = Model.Sort, Tamanho = Model.Tamanho, SearchQuery = Model.SearchQuery });
+                            <a href="@pageUrl" class="pagination__item @(i == Model.Page ? "active" : "")">@i</a>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fas fa-search empty-state__icon"></i>
+                    <h3>Nenhum produto encontrado</h3>
+                    <p>Tente ajustar os filtros ou buscar por outro termo.</p>
+                    <a href="/Products/Index" class="btn btn--primary">Ver todos os produtos</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Filter overlay -->
+<div class="filter-overlay" id="filterOverlay"></div>

@@ -1,0 +1,108 @@
+@model List<EssenzStore.Models.Brand>
+@{
+    ViewData["Title"] = "Marcas";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section TopbarActions {
+    <button class="btn-adm btn-adm--gold btn-adm--sm" onclick="abrirModal('modalMarca')">
+        <i class="fas fa-plus"></i> Nova Marca
+    </button>
+}
+
+<div class="adm-card">
+    <div class="adm-table-wrap">
+        <table class="adm-table">
+            <thead>
+                <tr><th>Nome</th><th>Slug</th><th>Ordem</th><th>Ativo</th><th style="text-align:right">Ações</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(b.LogoUrl))
+                            {
+                                <img src="@b.LogoUrl" alt="@b.Nome" style="height:24px;object-fit:contain;vertical-align:middle;margin-right:.5rem" />
+                            }
+                            <strong>@b.Nome</strong>
+                        </td>
+                        <td style="color:#666">@b.Slug</td>
+                        <td>@b.Ordem</td>
+                        <td><span class="badge badge--@(b.Ativo ? "active" : "inactive")">@(b.Ativo ? "Sim" : "Não")</span></td>
+                        <td style="text-align:right">
+                            <button class="btn-adm btn-adm--ghost btn-adm--sm"
+                                    onclick="editarMarca({id:@b.Id,nome:'@b.Nome.Replace("'","&#39;")',slug:'@b.Slug',logo:'@(b.LogoUrl ?? "")',ordem:@b.Ordem,ativo:@(b.Ativo ? "true" : "false")})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any()) {
+                    <tr><td colspan="5" style="text-align:center;color:#555;padding:2rem">Nenhuma marca cadastrada.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="adm-modal-bg" id="modalMarca">
+    <div class="adm-modal">
+        <p class="adm-modal__title" id="modalMarcaTitulo">Nova Marca</p>
+        <form asp-action="SalvarMarca" asp-controller="Admin" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" id="marcaId" value="0" />
+            <div class="adm-form-grid">
+                <div class="form-group">
+                    <label>Nome *</label>
+                    <input type="text" name="Nome" id="marcaNome" required />
+                </div>
+                <div class="form-group">
+                    <label>Slug</label>
+                    <input type="text" name="Slug" id="marcaSlug" />
+                </div>
+                <div class="form-group adm-form-grid--full">
+                    <label>URL do Logo</label>
+                    <input type="text" name="LogoUrl" id="marcaLogo" placeholder="https://..." />
+                </div>
+                <div class="form-group">
+                    <label>Ordem</label>
+                    <input type="number" name="Ordem" id="marcaOrdem" value="0" />
+                </div>
+                <div class="form-group" style="justify-content:flex-end;align-items:flex-end">
+                    <div class="form-check">
+                        <input type="checkbox" name="Ativo" id="marcaAtivo" value="true" checked />
+                        <label for="marcaAtivo">Ativo</label>
+                    </div>
+                </div>
+            </div>
+            <div class="adm-modal__footer">
+                <button type="button" class="btn-adm btn-adm--ghost" onclick="fecharModal('modalMarca')">Cancelar</button>
+                <button type="submit" class="btn-adm btn-adm--gold"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function abrirModal(id) { document.getElementById(id).classList.add('open'); }
+function fecharModal(id) { document.getElementById(id).classList.remove('open'); }
+function editarMarca(b) {
+    document.getElementById('modalMarcaTitulo').textContent = 'Editar Marca';
+    document.getElementById('marcaId').value = b.id;
+    document.getElementById('marcaNome').value = b.nome;
+    document.getElementById('marcaSlug').value = b.slug;
+    document.getElementById('marcaLogo').value = b.logo;
+    document.getElementById('marcaOrdem').value = b.ordem;
+    document.getElementById('marcaAtivo').checked = b.ativo;
+    abrirModal('modalMarca');
+}
+document.getElementById('marcaNome')?.addEventListener('input', function() {
+    const slug = document.getElementById('marcaSlug');
+    if (!slug.dataset.manual) slug.value = this.value.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+});
+document.getElementById('marcaSlug')?.addEventListener('input', function() { this.dataset.manual = '1'; });
+</script>
+}

@@ -1,0 +1,100 @@
+@model EssenzStore.Models.ViewModels.AccountDashboardViewModel
+@{
+    ViewData["Title"] = "Minha Conta";
+}
+
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-header__title">Minha Conta</h1>
+        <p>Olá, <strong>@Model.User.Nome</strong>! Bem-vindo de volta.</p>
+    </div>
+</div>
+
+<div class="container" style="padding-bottom:4rem">
+    <div class="account-layout">
+        <!-- Sidebar -->
+        <aside class="account-sidebar">
+            <div class="account-avatar">
+                <div class="account-avatar__circle">
+                    @Model.User.Nome.First()
+                </div>
+                <div>
+                    <strong>@Model.User.Nome @Model.User.Sobrenome</strong>
+                    <span>@Model.User.Email</span>
+                </div>
+            </div>
+            <nav class="account-nav">
+                <a href="/minha-conta" class="account-nav__item active"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="/Orders/Index" class="account-nav__item"><i class="fas fa-box"></i> Meus Pedidos</a>
+                <a href="/Wishlist/Index" class="account-nav__item"><i class="fas fa-heart"></i> Favoritos</a>
+                <a href="/Account/Addresses" class="account-nav__item"><i class="fas fa-map-marker-alt"></i> Endereços</a>
+                <a href="/Account/Profile" class="account-nav__item"><i class="fas fa-user"></i> Meu Perfil</a>
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="account-nav__item account-nav__item--logout">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </button>
+                </form>
+            </nav>
+        </aside>
+
+        <!-- Main -->
+        <div class="account-main">
+            <!-- Stats -->
+            <div class="account-stats">
+                <div class="account-stat">
+                    <span class="account-stat__num">@Model.TotalPedidos</span>
+                    <span class="account-stat__label">Pedidos</span>
+                </div>
+                <div class="account-stat">
+                    <span class="account-stat__num">@Model.TotalFavoritos</span>
+                    <span class="account-stat__label">Favoritos</span>
+                </div>
+                <div class="account-stat">
+                    <span class="account-stat__num">@Model.Addresses.Count</span>
+                    <span class="account-stat__label">Endereços</span>
+                </div>
+            </div>
+
+            <!-- Últimos pedidos -->
+            <div class="account-section">
+                <div class="account-section__header">
+                    <h2>Últimos Pedidos</h2>
+                    <a href="/Orders/Index" class="section__link">Ver todos</a>
+                </div>
+
+                @if (Model.RecentOrders.Any())
+                {
+                    <div class="orders-table">
+                        @foreach (var order in Model.RecentOrders)
+                        {
+                            <div class="order-row">
+                                <div class="order-row__num">
+                                    <strong>#@order.NumeroPedido</strong>
+                                    <span>@order.CreatedAt.ToString("dd/MM/yyyy")</span>
+                                </div>
+                                <div class="order-row__status">
+                                    <span class="status-badge status-badge--@order.Status.ToString().ToLower()">
+                                        @order.Status
+                                    </span>
+                                </div>
+                                <div class="order-row__total">
+                                    <strong>R$ @order.Total.ToString("N2")</strong>
+                                </div>
+                                <a href="/Orders/Detail/@order.Id" class="btn btn--ghost btn--sm">Ver</a>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state empty-state--sm">
+                        <i class="fas fa-box-open"></i>
+                        <p>Você ainda não fez nenhum pedido.</p>
+                        <a href="/Products/Index" class="btn btn--primary btn--sm">Começar a comprar</a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

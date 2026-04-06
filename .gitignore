@@ -1,0 +1,42 @@
+# Build
+bin/
+obj/
+out/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Secrets / environment
+.env
+.env.*
+!.env.example
+appsettings.Development.json
+appsettings.Local.json
+
+# Published artifacts
+publish/
+
+# Temporary project files
+*.tmp
+*.Backup.tmp
+*.http
+
+# SQLite local database
+*.db
+*.db-shm
+*.db-wal
+
+# Node (if any front build is added)
+node_modules/

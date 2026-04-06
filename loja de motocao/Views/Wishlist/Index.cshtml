@@ -1,0 +1,39 @@
+@model List<EssenzStore.Models.WishlistItem>
+@{
+    ViewData["Title"] = "Meus Favoritos";
+}
+
+<div class="page-header">
+    <div class="container">
+        <nav class="breadcrumb">
+            <a href="/">Home</a>
+            <i class="fas fa-chevron-right"></i>
+            <span>Favoritos</span>
+        </nav>
+        <h1 class="page-header__title">Meus Favoritos</h1>
+    </div>
+</div>
+
+<div class="container" style="padding-bottom:4rem;margin-top:2rem">
+    @if (Model.Any())
+    {
+        <div class="products-grid">
+            @foreach (var item in Model)
+            {
+                if (item.Product != null)
+                {
+                    @await Html.PartialAsync("_ProductCard", item.Product)
+                }
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state" style="margin-top:4rem">
+            <i class="far fa-heart empty-state__icon"></i>
+            <h3>Nenhum favorito ainda</h3>
+            <p>Explore nossa loja e adicione produtos aos favoritos.</p>
+            <a href="/Products/Index" class="btn btn--primary btn--lg">Explorar produtos</a>
+        </div>
+    }
+</div>

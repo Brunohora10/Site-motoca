@@ -1,0 +1,103 @@
+@model EssenzStore.Models.ViewModels.RegisterViewModel
+@{
+    ViewData["Title"] = "Criar conta";
+}
+
+<div class="auth-page">
+    <div class="auth-card auth-card--wide">
+        <div class="auth-card__header">
+            <h1 class="auth-card__title">Criar conta</h1>
+            <p class="auth-card__sub">Junte-se à Essenz Store e aproveite benefícios exclusivos</p>
+        </div>
+
+        <form asp-action="Register" method="post" class="auth-form">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="All" class="validation-summary"></div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label asp-for="Nome" class="form-label">Nome</label>
+                    <input asp-for="Nome" class="form-input" placeholder="João" />
+                    <span asp-validation-for="Nome" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Sobrenome" class="form-label">Sobrenome</label>
+                    <input asp-for="Sobrenome" class="form-input" placeholder="Silva" />
+                    <span asp-validation-for="Sobrenome" class="field-error"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Email" class="form-label">E-mail</label>
+                <input asp-for="Email" class="form-input" placeholder="seu@email.com" autocomplete="email" />
+                <span asp-validation-for="Email" class="field-error"></span>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label asp-for="Telefone" class="form-label">Telefone</label>
+                    <input asp-for="Telefone" class="form-input" placeholder="(48) 99999-9999" />
+                    <span asp-validation-for="Telefone" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Cpf" class="form-label">CPF <small>(opcional)</small></label>
+                    <input asp-for="Cpf" class="form-input" placeholder="000.000.000-00" />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label asp-for="Senha" class="form-label">Senha</label>
+                    <div class="input-password">
+                        <input asp-for="Senha" class="form-input" placeholder="Mínimo 6 caracteres" id="senhaInput" />
+                        <button type="button" class="input-password__toggle" onclick="togglePass('senhaInput', this)">
+                            <i class="far fa-eye"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="Senha" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="ConfirmarSenha" class="form-label">Confirmar senha</label>
+                    <div class="input-password">
+                        <input asp-for="ConfirmarSenha" class="form-input" placeholder="Repita a senha" id="confirmInput" />
+                        <button type="button" class="input-password__toggle" onclick="togglePass('confirmInput', this)">
+                            <i class="far fa-eye"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="ConfirmarSenha" class="field-error"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input asp-for="AceitaTermos" type="checkbox" required />
+                    <span>Li e aceito os <a href="/paginas/termos-de-uso" target="_blank">Termos de Uso</a> e a <a href="/paginas/politica-de-privacidade" target="_blank">Política de Privacidade</a></span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input asp-for="AceitaMarketing" type="checkbox" />
+                    <span>Desejo receber novidades e promoções por e-mail</span>
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn--primary btn--lg btn--block">Criar conta</button>
+        </form>
+
+        <div class="auth-card__footer">
+            <p>Já tem conta? <a href="/Account/Login">Entrar</a></p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function togglePass(id, btn) {
+        const input = document.getElementById(id);
+        if (input.type === 'password') { input.type = 'text'; btn.innerHTML = '<i class="far fa-eye-slash"></i>'; }
+        else { input.type = 'password'; btn.innerHTML = '<i class="far fa-eye"></i>'; }
+    }
+</script>
+}
