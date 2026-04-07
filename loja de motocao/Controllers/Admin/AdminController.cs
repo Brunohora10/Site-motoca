@@ -298,7 +298,9 @@ public class AdminController : Controller
         const int pageSize = 20;
         var query = _db.Orders.Include(o => o.Items).AsQueryable();
         if (!string.IsNullOrWhiteSpace(q))
-            query = query.Where(o => o.NumeroPedido.Contains(q) || o.EmailCliente.Contains(q) || o.NomeCliente.Contains(q));
+            query = query.Where(o => o.NumeroPedido.Contains(q) ||
+                                     (o.EmailCliente ?? "").Contains(q) ||
+                                     (o.NomeCliente ?? "").Contains(q));
         if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<OrderStatus>(status, out var s))
             query = query.Where(o => o.Status == s);
         var total = await query.CountAsync();
@@ -323,7 +325,9 @@ public class AdminController : Controller
                         o.Status == OrderStatus.Cancelled);
 
         if (!string.IsNullOrWhiteSpace(q))
-            query = query.Where(o => o.NumeroPedido.Contains(q) || o.EmailCliente.Contains(q) || o.NomeCliente.Contains(q));
+            query = query.Where(o => o.NumeroPedido.Contains(q) ||
+                                     (o.EmailCliente ?? "").Contains(q) ||
+                                     (o.NomeCliente ?? "").Contains(q));
 
         var total = await query.CountAsync();
         var orders = await query.OrderByDescending(o => o.UpdatedAt)
@@ -678,7 +682,16 @@ public class AdminController : Controller
     public async Task<IActionResult> UploadImagem(int produtoId, List<IFormFile> files)
     {
         var uploadsDir = Path.Combine(_env.WebRootPath, "uploads", "products");
-        Directory.CreateDirectory(uploadsDir);
+        try
+        {
+            Directory.CreateDirectory(uploadsDir);
+        }
+        catch
+        {
+            uploadsDir = Path.Combine(Path.GetTempPath(), "essenzstore", "uploads", "products");
+            Directory.CreateDirectory(uploadsDir);
+        }
+
         var ordem = await _db.ProductImages.Where(i => i.ProductId == produtoId).CountAsync();
         foreach (var file in files)
         {
