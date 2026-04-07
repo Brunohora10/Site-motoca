@@ -75,3 +75,24 @@ git push -u origin main
 - [ ] Senha admin alterada
 - [ ] Backup do banco (`.db`) configurado
 - [ ] Teste de compra ponta-a-ponta concluído
+
+## Demo rápido em hospedagem gratuita
+
+Para mostrar para o cliente sem custo inicial, o caminho mais rápido é usar `Render` com o arquivo `render.yaml` já incluído no repositório.
+
+### Como publicar no Render
+
+1. Entrar em `https://render.com`
+2. Conectar com o GitHub
+3. Escolher `New +` → `Blueprint`
+4. Selecionar o repositório `Site-motoca`
+5. Confirmar o deploy
+
+### Observação importante
+
+O `render.yaml` atual usa `SQLite` em arquivo temporário (`/tmp/essenzstore.db`).
+Isso serve para **demo/apresentação**, mas **não é ideal para produção**, porque os dados podem ser perdidos após reinício da instância.
+
+Para produção real, usar:
+- `Azure App Service + Azure SQL`, ou
+- `Render + PostgreSQL`

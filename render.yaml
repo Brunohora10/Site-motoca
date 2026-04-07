@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: essenz-store-demo
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__DefaultConnection
+        value: Data Source=/tmp/essenzstore.db
