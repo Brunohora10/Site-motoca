@@ -5,7 +5,21 @@
     var payment = Model.Payments.FirstOrDefault();
     var shipment = Model.Shipments.FirstOrDefault();
     var statuses = new[] { "Pending","Paid","Separating","Packed","Shipped","Delivered","Returned","Refunded","Cancelled" };
-    var address = System.Text.Json.JsonDocument.Parse(Model.EnderecoEntregaJson).RootElement;
+
+    System.Text.Json.JsonElement address = default;
+    var hasAddress = false;
+    if (!string.IsNullOrWhiteSpace(Model.EnderecoEntregaJson))
+    {
+        try
+        {
+            address = System.Text.Json.JsonDocument.Parse(Model.EnderecoEntregaJson).RootElement.Clone();
+            hasAddress = true;
+        }
+        catch
+        {
+            hasAddress = false;
+        }
+    }
 }
 
 @section TopbarActions {
@@ -127,7 +141,9 @@
             <p class="adm-card__title">Endereço de Entrega</p>
             <div style="font-size:.82rem;color:#888;line-height:1.7">
                 @{
-                    string GetStr(string key) {
+                    string GetStr(string key)
+                    {
+                        if (!hasAddress) return "";
                         try { return address.GetProperty(key).GetString() ?? ""; }
                         catch { return ""; }
                     }

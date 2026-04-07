@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EssenzStore.Controllers.Admin;
 
-[Authorize(Roles = "Admin"), Route("admin")]
+[Authorize(Roles = "Admin,Manager"), Route("admin")]
 public class AdminController : Controller
 {
     private readonly ApplicationDbContext _db;
@@ -315,11 +315,12 @@ public class AdminController : Controller
     public async Task<IActionResult> ListarDevolucoes(string? q, int page = 1)
     {
         const int pageSize = 20;
-        var statuses = new[] { OrderStatus.Returned, OrderStatus.Refunded, OrderStatus.Cancelled };
 
         var query = _db.Orders
             .Include(o => o.Items)
-            .Where(o => statuses.Contains(o.Status));
+            .Where(o => o.Status == OrderStatus.Returned ||
+                        o.Status == OrderStatus.Refunded ||
+                        o.Status == OrderStatus.Cancelled);
 
         if (!string.IsNullOrWhiteSpace(q))
             query = query.Where(o => o.NumeroPedido.Contains(q) || o.EmailCliente.Contains(q) || o.NomeCliente.Contains(q));
@@ -398,6 +399,7 @@ public class AdminController : Controller
         return View("~/Views/Admin/Customers/Index.cshtml", users);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpGet("equipe")]
     public async Task<IActionResult> Equipe(string? q)
     {
@@ -430,6 +432,7 @@ public class AdminController : Controller
         return View("~/Views/Admin/Team/Index.cshtml", vm);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost("equipe/{id}/permissao"), ValidateAntiForgeryToken]
     public async Task<IActionResult> AtualizarPermissao(string id, string permissao, bool ativo)
     {
